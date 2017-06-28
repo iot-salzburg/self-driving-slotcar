@@ -3,8 +3,6 @@ import sys as sys
 import time
 import matplotlib
 #have to do this to set backend of matplotlib. otherwise now graph is displayed
-#TODO make it a live update
-
 matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
 
@@ -22,6 +20,7 @@ stdout = sys.stdout
 
 #store last 100 acceleration values to display in a graph
 acc_data = [[], [], []]
+moving_average = [[], [], []]
 time_data = [[], [], []]
 plot_counter = 0
 graph = None
@@ -38,7 +37,7 @@ def on_connect(client, userdata, flags, rc):
 
 #the call back for when a PUBLISH message is re   ceived from the server.
 def on_message(client, userdata, msg):
-	global norm, offsets, cal, start, plot_counter, graph, last_update
+	global norm, offsets, cal, start, plot_counter, graph, last_update, moving_average
 	#to have the messgae in the right format. The first item in the split string is the type of message sent. 
 	#More info in ESP8266 code
 	true_msg = msg.payload.decode().split("/")
@@ -85,25 +84,35 @@ def on_message(client, userdata, msg):
 		direction = ord(split_msg[0]) - ord('X')
 		new_acc = (int(split_msg[2]) - offsets[direction])/norm[direction]
 		acc_data[direction].append(new_acc)
+		
+		if len(acc_data[direction]) <= 20:
+			moving_average[direction].append(new_acc)
+		else:
+			sum_av = 0
+			length_acc = len(acc_data[direction])
+			for i in acc_data[direction][length_acc - 20:length_acc]:
+				sum_av += i
+			moving_average[direction].append(sum_av/20)
 		if len(time_data[direction]) == 0:
 			time_data[direction].append(int(time_split[1]))
 		else:
 			last_time = time_data[direction][len(time_data[direction]) -1]
 			time_data[direction].append(int(time_split[1]) + last_time)
-		if len(acc_data[0]) == 101 :
+		if len(acc_data[0]) == 501 :
 			acc_data[direction].pop(0)
+			moving_average[direction].pop(0)
 			time_data[direction].pop(0)
-		#if len(acc_data[0]) == 100 and direction == 0 and (last_update == 0 or time.time() - last_update > 0.5):
-			#last_update = time.time()
-			#if graph == None:
-				##put plt in interactive mode
-				#plt.ion()
-				#graph = plt.plot(time_data[direction], acc_data[0])[0]
-			#graph.set_ydata(acc_data[0])
-			#graph.set_xdata(time_data[direction])
-			#plt.axis([min(time_data[direction]), max(time_data[direction]), -2, 2])
-			#plt.draw()
-			#plt.pause(0.01)
+		if len(acc_data[0]) == 500 and direction == 0 and (last_update == 0 or time.time() - last_update > 1):
+			last_update = time.time()
+			if graph == None:
+				#put plt in interactive mode
+				plt.ion()
+				graph = plt.plot(time_data[direction], moving_average[0])[0]
+			graph.set_ydata(moving_average[0])
+			graph.set_xdata(time_data[direction])
+			plt.axis([min(time_data[direction]), max(time_data[direction]), -2, 2])
+			plt.draw()
+			plt.pause(0.01)
 		print("time: " + str(time_split[1]))
 		print(msg.topic + " " + chr(direction + ord('X')) + ": " + str(new_acc))
 
@@ -114,9 +123,6 @@ client.on_message = on_message
 
 client.connect(server_ip, 1883) 
 
-#fig = plt.figure()
-#ax_x = plt.add_subplot(211)
-#ax_y = plt.add_subplot(212)
 
 
 #good loop function since it handles reconnection for us
