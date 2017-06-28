@@ -5,6 +5,7 @@ import matplotlib
 #have to do this to set backend of matplotlib. otherwise now graph is displayed
 matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class esp_client():
@@ -132,11 +133,12 @@ class esp_client():
 		if len(self.acc_data[direction]) <= 20:
 			self.moving_average[direction].append(acc_curr)
 		else:
-			sum_av = 0
+			sum_time = 0
 			length_acc = len(acc_data[direction])
-			for i in acc_data[direction][length_acc - 20:length_acc]:
-				sum_av += i
-			moving_average[direction].append(sum_av/20)
+			acc_np = np.array(self.acc_data[direction][-20:]
+			time_np = np.array(self.time_data[direction][-20:]
+			average = (acc_np * time_np)/20
+			return average
 	
 	
 	#handles the plotting of the given data
