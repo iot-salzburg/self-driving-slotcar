@@ -18,12 +18,12 @@ class esp_client():
 	upper_bound = 32767
 	lower_bound = -32768
 	start = False
-	stdout = sys.stdout
 
 	#store last 100 acceleration values to display in a graph
 	acc_data = [[], [], []]
 	moving_average = [[], [], []]
 	time_data = [[], [], []]
+	delta_time_data = [[],[],[]] #to compute moving average. might be solved differently/better
 	plot_counter = 0
 	graph = None
 	last_update = 0
@@ -38,28 +38,20 @@ class esp_client():
 		
 		
 		self.client = paho.Client()
-		self.client.on_connect = on_connect
-		self.client.on_message = on_message
+		self.client.on_connect = self.on_connect
+		self.client.on_message = self.on_message
 
 		self.client.connect(server_ip, 1883) 
 
 
-
-
-	
-	
-	
-
-
-	def on_connect(client, userdata, flags, rc):
+	def on_connect(self, client, userdata, flags, rc):
 		#subscription will always be automatically renewed here. even 
 		#by connection failure
 		client.subscribe("Test_topic")
 		print("Connected to broker and topic")
 
 	#the call back for when a PUBLISH message is re   ceived from the server.
-	def on_message(client, userdata, msg):
-		global norm, offsets, cal, start, plot_counter, graph, last_update, moving_average
+	def on_message(self, client, userdata, msg):
 		
 		#to have the message in the right format. The first item in the split string is the type of message sent. 
 		#More info in ESP8266 code
@@ -70,92 +62,116 @@ class esp_client():
 		#command that tells us that we should get ready. calibration will start soon.
 		if msg_indicator == "0":
 			print(msg_body)
-			start = False
-		#the command that calibration will now begin.
+			self.start = False
+			self.store_data()
+		#the command that calibration will now begin. (Maybe esp should send a message with how many calibration messages i will get. actually, shouldn't matter, i should be able to decide when to start.)
 		elif msg_indicator == "2":
 			print(msg_body)
-			cal = True
-			norm = [0,0,0]
-			offsets = [0,0,0]
+			self.cal = True
+			self.norm = [0,0,0]
+			self.offsets = [0,0,0]
 		#ending calibration. Setting all relevent calibration data
 		elif msg_indicator== "3":
-			cal = False
+			self.cal = False
 			for i in range(3):
+				#for the z axis to make it calibrated to 1g
 				if(i == 2):
-					offsets[i] = offsets[i]/20 - upper_bound/2
+					self.offsets[i] = self.offsets[i]/20 - self.upper_bound/2
 				else:
-					offsets[i] = offsets[i]/20
-				norm[i] = (upper_bound)/num_g
+					self.offsets[i] = self.offsets[i]/20
+				self.norm[i] = (self.upper_bound)/self.num_g
 			sys.stdout.write("\n")
 			sys.stdout.flush()
 			print(msg_body)	
 		#storing the values from calibration. I could combine it with "print correct acceleration" if statement.
-		elif cal:
+		elif self.cal:
 			time_split = msg_body.split(".|")
 			split_msg = time_split[0].split(" ")
 			direction = ord(split_msg[0]) - ord('X')
-			offsets[direction] += int(split_msg[2])
+			self.offsets[direction] += int(split_msg[2])
 			sys.stdout.write("#")
 			sys.stdout.flush()
 		#I want to get rid of this. For now it helps me start data transfer
 		elif msg_indicator == "4":
 			print(msg_body)
-			start = True
+			self.start = True
 			
 		#print correct acceleration
-		elif not cal and start:
+		elif not self.cal and self.start:
 			time_split = msg_body.split(".|")
 			split_msg = time_split[0].split(" ")
 			direction = ord(split_msg[0]) - ord('X')
-			new_acc = (int(split_msg[2]) - offsets[direction])/norm[direction]
-			acc_data[direction].append(new_acc)
 			
+			new_acc = (int(split_msg[2]) - self.offsets[direction])/self.norm[direction]
+			
+			self.acc_data[direction].append(new_acc)
+			
+			self.calculate_moving_average(direction, new_acc)
 
-			if len(time_data[direction]) == 0:
-				time_data[direction].append(int(time_split[1]))
-			else:
-				last_time = time_data[direction][len(time_data[direction]) -1]
-				time_data[direction].append(int(time_split[1]) + last_time)
-			if len(acc_data[0]) == 501 :
-				acc_data[direction].pop(0)
-				moving_average[direction].pop(0)
-				time_data[direction].pop(0)
-			if len(acc_data[0]) == 500 and direction == 0 and (last_update == 0 or time.time() - last_update > 1):
+			self.set_time_data(direction, int(time_split[1]))
+			
+			plot_dir = 0
+			
+			#if len(self.acc_data[0]) == 501 :
+				#self.acc_data[direction].pop(0)
+				#self.moving_average[direction].pop(0)
+				#self.time_data[direction].pop(0)
+				#self.delta_time_data[direction].pop(0)
+			
+			
+			if len(self.acc_data[plot_dir]) >= 500 and direction == plot_dir and (self.last_update == 0 or time.time() - self.last_update > 1):
 				self.plot_data(direction)
 			print("time: " + str(time_split[1]))
 			print(msg.topic + " " + chr(direction + ord('X')) + ": " + str(new_acc))
+	
+	def set_time_data(self, direction, time):
+		self.delta_time_data[direction].append(time)
+		if len(self.time_data[direction]) == 0:
+			self.time_data[direction].append(time)
+		else:
+			last_time = self.time_data[direction][-1:][0] #maybe inefficient
+			self.time_data[direction].append(time + last_time)
 	
 	#calculates and sets the moving average
 	#direction: tells us which axis we are getting data from (int)
 	#acc_curr: the data we received (float)
 	#call after we set and received acceleration data
-	def moving_average(self, direction, acc_curr):
-		if len(self.acc_data[direction]) <= 20:
+	def calculate_moving_average(self, direction, acc_curr):
+		N = 50 #how many data points to use for moving average
+		if len(self.acc_data[direction]) <= N:
 			self.moving_average[direction].append(acc_curr)
 		else:
 			sum_time = 0
-			length_acc = len(acc_data[direction])
-			acc_np = np.array(self.acc_data[direction][-20:]
-			time_np = np.array(self.time_data[direction][-20:]
-			average = (acc_np * time_np)/20
-			return average
+			acc_np = np.array(self.acc_data[direction][-N:])
+			time_np = np.array(self.delta_time_data[direction][-N:])
+			average = np.cumsum(acc_np * time_np)[-1:][0]/(np.cumsum(time_np)[-1:][0]) #maybe weird to index again. don't like the denominator
+			#average = np.cumsum(acc_np)[-1:][0]/N
+			self.moving_average[direction].append(average)
 	
 	
 	#handles the plotting of the given data
 	def plot_data(self, direction):
+		far_back = 500
 		self.last_update = time.time()
-				if self.graph == None:
-					#put plt in interactive mode
-					self.plt.ion()
-					self.graph = self.plt.plot(self.time_data[direction], self.moving_average[direction])[0]
-				self.graph.set_ydata(moving_average[direction])
-				self.graph.set_xdata(time_data[direction])
-				self.plt.axis([min(self.time_data[direction]), max(self.time_data[direction]), -2, 2])
-				self.plt.draw()
-				self.plt.pause(0.01)
+		if self.graph == None:
+			#put plt in interactive mode
+			plt.ion()
+			self.graph = plt.plot(self.time_data[direction][-far_back:], self.moving_average[direction][-far_back:])[0]
+		self.graph.set_ydata(self.moving_average[direction][-far_back:])
+		self.graph.set_xdata(self.time_data[direction][-far_back:])
+		plt.axis([min(self.time_data[direction][-far_back:]), max(self.time_data[direction][-far_back:]), -2, 2])
+		plt.draw()
+		plt.pause(0.01)
+		
+	def store_data(self):
+		t = self.delta_time_data
+		a = self.acc_data
+		to_store = [[t[0], a[0]], [t[1], a[1]], [t[2], a[2]]]
+		with open("mylist.txt","w") as f: #in write mode
+			f.write("{}".format(to_store))
 
  
 client = esp_client()
 #good loop function since it handles reconnection for us
-client.loop_forever()
+client.client.loop_forever()
 	
