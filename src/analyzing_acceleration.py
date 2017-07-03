@@ -18,17 +18,20 @@ class analyzing_acceleration():
 	
 	def __init__(self): 
 		with open("mylist.txt") as f: #in read mode, not in write mode, careful. 'r' is assumed
-			data=json.load(f)
-		self.data = np.array(data)
+			pre_data=json.load(f)
+			self.data = np.array(pre_data)
+		self.data[0] = self.data[0]*0.001 #scaling milliseconds
+		self.data[1:] = self.data[1:]*[9.8] #scaling gravity
+		#self.data[2] = self.data[2] #seemed to be negative. not anymore?
+		self.forward_dir = 2
+		#self.set_as_moving_average()
 		self.thetas = None #in radians
 		self.velocity_forward = None
 		self.delta_forward_distance = None
 		self.y_displacement = None
 		self.x_displacement = None
 		self.set_position()
-		
-	#
-	def process_data(self):
+
 		
 	#provides a list of horizontal velocity data. Assuming that we had never turned.
 	#will be used by other algorithms. 
@@ -37,30 +40,30 @@ class analyzing_acceleration():
 	#time with the same index as the later data point.
 	#forward direction is given by y axis from accelerometer
 	def set_velocity_data(self):
-		forward_dir = 1
-		a_acc = self.data[forward_dir + 1]
-		b_acc = np.append([0], a_acc[:-1])
-		self.combined_acc = (a_acc + b_acc)/2 #getting averages. might be dangerous to get combined acc here
-		self.velocity_forward = np.cumsum(self.combined_acc*self.data[0])
+	
+		#a_acc = self.data[forward_dir]
+		#b_acc = np.append([0], a_acc[:-1])
+		#self.combined_acc = (a_acc + b_acc)/2 #getting averages. might be dangerous to get combined acc here
+		self.velocity_forward = np.cumsum(self.data[self.forward_dir]*self.data[0])
 		
-	def set_delta_forward_ditance(self):
+	def set_delta_forward_distance(self):
 		if self.velocity_forward == None:
 			self.set_velocity_data()
-		self.delta_forward_distance = velocity_forward*self.data[0]
+		self.delta_forward_distance = self.velocity_forward*self.data[0]
 	
 	#calculates teh angle of the car from it's initial forward direction.
 	#using formula theta*r = l (arc)
 	def set_direction_angles(self):
-		if self.velocity_foward == None:
+		if self.velocity_forward == None:
 			self.set_velocity_data()
 		if self.delta_forward_distance == None:
 			self.set_delta_forward_distance()
-		radii = velocity_forward**2/self.combined_acc
-		self.thetas = delta_forward_distance/radii
+		radii = self.velocity_forward**2/self.data[self.forward_dir]
+		self.thetas = self.delta_forward_distance/radii
 		
 	#calculates the y and x displacement
 	def set_position(self):
-		if self.velocity_foward == None:
+		if self.velocity_forward == None:
 			self.set_velocity_data()
 		if self.delta_forward_distance == None:
 			self.set_delta_forward_distance()
@@ -72,12 +75,26 @@ class analyzing_acceleration():
 		self.x_displacement = np.cumsum(x_weights * self.delta_forward_distance)
 		
 	def plot_data(self):
-		self.graph = plt.plot(self.x_displacement, self.y_displacement)[0]
+		self.graph = plt.plot(np.cumsum(self.data[0]), np.cumsum(self.data[2]))[0]
 		plt.show()
+		
+		#calculates and sets the moving average
+	#direction: tells us which axis we are getting data from (int)
+	#acc_curr: the data we received (float)
+	#call after we set and received acceleration data
+	#only to be done if we are plotting
+	def set_as_moving_average(self):
+		how_far = 50
+		for j in range(1,4):
+			for i in range(how_far, len(self.data[j])):
+				self.data[j][i-how_far-1] = np.cumsum(self.data[j][i-how_far:i] * self.data[0][i-how_far:i])[-1:]
+		
+		
+	
 
 		
 		
 
-
-analyze_acc = analyzing_acceleration()
-analyze_acc.plot_data()
+if __name__ == "__main__":
+	analyze_acc = analyzing_acceleration()
+	analyze_acc.plot_data()

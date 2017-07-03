@@ -27,7 +27,6 @@ class esp_client():
 	moving_average = [[], [], []]
 	time_data = []
 	delta_time_data = [] #to compute moving average. might be solved differently/better
-	plot_counter = 0
 	graph = None
 	last_update = 0
 
@@ -109,8 +108,11 @@ class esp_client():
 			split_msg = time_split[0].split(" ")
 			direction = ord(split_msg[0]) - ord('X')
 			
-			new_acc = (int(split_msg[2]) - self.offsets[direction])/self.norm[direction]
+			new_acc = (int(split_msg[2]))/self.norm[direction] #- self.offsets[direction])/self.norm[direction]
 			
+			if len(self.acc_data[0]) == 0 and direction != 0:
+				return
+				
 			self.acc_data[direction].append(new_acc)
 			
 			self.set_time_data(direction, int(time_split[1]))
@@ -150,7 +152,7 @@ class esp_client():
 	def calculate_moving_average(self, direction, acc_curr):
 		if not self.should_plot:
 			return
-		N = 50 #how many data points to use for moving average
+		N = 20 #how many data points to use for moving average
 		if len(self.acc_data[direction]) <= N:
 			self.moving_average[direction].append(acc_curr)
 		else:
@@ -183,12 +185,13 @@ class esp_client():
 			return
 		t = self.delta_time_data
 		a = self.acc_data
-		to_store = [t, a[0], a[1], a[2]]
+		how_long = min(len(t), len(a[0]), len(a[1]), len(a[2]))
+		to_store = [t[:how_long], a[0][:how_long], a[1][:how_long], a[2][:how_long]]
 		with open("mylist.txt","w") as f: #in write mode
 			f.write(json.dumps(to_store))
 
  
-client = esp_client(plot=True, store=True, plot_dir=0)
+client = esp_client(plot=True, store=True, plot_dir=1)
 #good loop function since it handles reconnection for us
 client.client.loop_forever()
 	
