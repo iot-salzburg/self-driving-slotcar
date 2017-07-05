@@ -66,7 +66,8 @@ class espClient():
 
 	#the call back for when a PUBLISH message is re   ceived from the server.
 	def on_message(self, client, userdata, msg):
-		
+		print(msg.payload)
+		return
 		#to have the message in the right format. The first item in the split string is the type of message sent. 
 		#More info in ESP8266 code
 		true_msg = msg.payload.decode().split("/")
