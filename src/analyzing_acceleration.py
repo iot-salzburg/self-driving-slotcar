@@ -75,7 +75,7 @@ class analyzing_acceleration():
 		self.x_displacement = np.cumsum(x_weights * self.delta_forward_distance)
 		
 	def plot_data(self):
-		self.graph = plt.plot(np.cumsum(self.data[0]), np.cumsum(self.data[2]))[0]
+		self.graph = plt.plot(np.cumsum(self.data[0]), (self.data[2]), '.')[0]
 		plt.show()
 		
 		#calculates and sets the moving average

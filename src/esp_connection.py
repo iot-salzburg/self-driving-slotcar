@@ -7,11 +7,15 @@ matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
 import numpy as np
 import json
+import simple_ai_algorithm as ai
+
+#possible improvement. Only loop data when ready to process data. otherwise we will get an issue with queues. solution would be to send data less frequently but in bigger packets or 
+#to have multiple mqtt queues. something to consider for later. does not seem significant now.
 
 
-#directions are: 0 for x and cross acc, 1 for y and forward acc, and 2 for z and upward acc.
+#directions are: 0 for y and cross acc, 1 for x and forward acc, and 2 for z and upward acc.
 
-class esp_client():
+class espClient():
 
 	#need to store calibration data
 	num_g = 2
@@ -34,10 +38,11 @@ class esp_client():
 	
 	#server_ip of mqtt host, type string. 
 	#port number, type int. (usually the mqtt port)
-	def __init__(self, server_ip="192.168.48.188", port=1883, plot=False, store=False, plot_dir=0):
+	def __init__(self, server_ip="192.168.48.188", port=1883, plot=False, store=False, plot_dir=0, should_ai=False, plot_raw=False):
 		self.server_ip = server_ip
 		self.port = port
 		
+		self.simpleAI = ai.simpleAI()
 		
 		self.client = paho.Client()
 		self.client.on_connect = self.on_connect
@@ -48,7 +53,10 @@ class esp_client():
 		self.should_plot = plot
 		self.should_store = store
 		self.plot_dir = plot_dir
-
+		
+		self.last_ai_time = 0
+		self.should_ai = should_ai
+		self.plot_raw = plot_raw
 
 	def on_connect(self, client, userdata, flags, rc):
 		#subscription will always be automatically renewed here. even 
@@ -108,7 +116,7 @@ class esp_client():
 			split_msg = time_split[0].split(" ")
 			direction = ord(split_msg[0]) - ord('X')
 			
-			new_acc = (int(split_msg[2]))/self.norm[direction] #- self.offsets[direction])/self.norm[direction]
+			new_acc = (int(split_msg[2])- self.offsets[direction])/self.norm[direction]
 			
 			if len(self.acc_data[0]) == 0 and direction != 0:
 				return
@@ -118,15 +126,17 @@ class esp_client():
 			self.set_time_data(direction, int(time_split[1]))
 			
 			self.calculate_moving_average(direction, new_acc)
-
 			
-			
-			
-			#Imporvement: include if statement in method
-			if len(self.acc_data[self.plot_dir]) >= 500 and direction == self.plot_dir and (self.last_update == 0 or time.time() - self.last_update > 1):
-				self.plot_data(direction)
-			print("time: " + str(time_split[1]))
-			print(msg.topic + " " + chr(direction + ord('X')) + ": " + str(new_acc))
+			if direction == 0 and len(self.moving_average[direction]) > 0 and time.time() - self.last_ai_time > 0.05 and self.should_ai:
+				self.last_ai_time = time.time()
+				temp_time = time.time()
+				self.simpleAI.main(self.moving_average[0][-1:][0]* 9.8) #calling the simple algorithm here. kinda weird. should make it more lean, kinda too bulcky
+				#print("Delta time: " + str(time.time() - temp_time))
+				
+			self.plot_data(direction)
+			if self.should_plot:
+                                print("time: " + str(time_split[1]))
+                                print(msg.topic + " " + chr(direction + ord('X')) + ": " + str(new_acc))
 	
 	def set_time_data(self, direction, time):
 		#should be updated once i will fix how the esp transmits data. we will only use one time 
@@ -150,8 +160,7 @@ class esp_client():
 	#call after we set and received acceleration data
 	#only to be done if we are plotting
 	def calculate_moving_average(self, direction, acc_curr):
-		if not self.should_plot:
-			return
+
 		N = 20 #how many data points to use for moving average
 		if len(self.acc_data[direction]) <= N:
 			self.moving_average[direction].append(acc_curr)
@@ -159,27 +168,33 @@ class esp_client():
 			sum_time = 0
 			acc_np = np.array(self.acc_data[direction][-N:])
 			time_np = np.array(self.delta_time_data[-N:])
-			average = np.cumsum(acc_np * time_np)[-1:][0]/(np.cumsum(time_np)[-1:][0]) #maybe weird to index again. don't like the denominator
+			average = np.cumsum(acc_np * time_np)[-1:]/(np.cumsum(time_np)[-1:][0]) #maybe weird to index again. don't like the denominator
 			#average = np.cumsum(acc_np)[-1:][0]/N
 			self.moving_average[direction].append(average)
 	
 	
 	#handles the plotting of the given data
 	def plot_data(self, direction):
-		if not self.should_plot:
+		if not (self.should_plot and (len(self.acc_data[self.plot_dir]) >= 500 and direction == self.plot_dir and (self.last_update == 0 or time.time() - self.last_update > 1))):
 			return
 		far_back = 500
+		data_to_use=None
+		if self.plot_raw:
+			data_to_use=self.acc_data[direction][-far_back:]
+		else:
+			data_to_use = self.moving_average[direction][-far_back:]
 		self.last_update = time.time()
 		if self.graph == None:
 			#put plt in interactive mode
 			plt.ion()
-			self.graph = plt.plot(self.time_data[-far_back:], self.moving_average[direction][-far_back:])[0]
-		self.graph.set_ydata(self.moving_average[direction][-far_back:])
+			self.graph = plt.plot(self.time_data[-far_back:], data_to_use, '.')[0]
+		self.graph.set_ydata(data_to_use)
 		self.graph.set_xdata(self.time_data[-far_back:])
 		plt.axis([min(self.time_data[-far_back:]), max(self.time_data[-far_back:]), -2, 2])
 		plt.draw()
 		plt.pause(0.01)
-		
+	
+	#stores n data points locally. To store data, let the program run and the press reset.
 	def store_data(self):
 		if not self.should_store:
 			return
@@ -191,7 +206,7 @@ class esp_client():
 			f.write(json.dumps(to_store))
 
  
-client = esp_client(plot=True, store=True, plot_dir=1)
+client = espClient(store=True)
 #good loop function since it handles reconnection for us
 client.client.loop_forever()
 	

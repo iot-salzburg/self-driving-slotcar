@@ -2,7 +2,7 @@ import serial
 import numpy as np
 import time
 
-class CPB_Communication():
+class slotcarClient():
 	# the lookup table for the crc checksum
 	lookup_table = [0x00,0x07,0x0e,0x09,0x1c,0x1b,0x12,0x15,0x38,0x3f,0x36,0x31,0x24,0x23,0x2a,0x2d,
 0x70,0x77,0x7E,0x79,0x6C,0x6B,0x62,0x65,0x48,0x4F,0x46,0x41,0x54,0x53,0x5A,0x5D,
@@ -22,7 +22,7 @@ class CPB_Communication():
 0xDE,0xD9,0xD0,0xD7,0xC2,0xC5,0xCC,0xCB,0xE6,0xE1,0xE8,0xEF,0xFA,0xFD,0xF4,0xF3 ]
 	
 	def __init__(self):
-		self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate=19200)
+		self.ser = serial.Serial(port='/dev/ttyUSB1', baudrate=19200)
 		self.handsets_on = [0,0,0,0,0,0] #if the connection to the ith handset is established
 		self.handsets_info = [[0],[0],[0],[0],[0],[0]] #information about the ith handset. information in the array. index 0: brake boolea, index1: lane_change boolean index2: power int
 		self.response = None
@@ -34,6 +34,8 @@ class CPB_Communication():
 		self.last_packet_sent = None
 		self.game_timer = None
 		self.car_times = np.zeros((6,2), dtype=np.float) #2D array where the first level detrmines the car i=0 for car1 etc. and second level has form [last_lap_time, last_global_time] (global time is the time since when the car passed SF line for the first time)
+		self.checksum_tries = 0
+		self.packets_read =0 
 
 	#writes 9bytes
 	#sucIndicator = boolean wether we received previous packet sucessfully
@@ -53,10 +55,10 @@ class CPB_Communication():
 		pre_output.append(ledByte)
 		pre_output.append(self.checksum_calc(pre_output))
 		self.last_packet_sent = bytearray(pre_output)
+		#print(self.last_packet_sent)
 		self.ser.write(self.last_packet_sent)
-		self.response = self.ser.read(15) #manual say that there are 14 bytes. I tried it and there seems to be an 
+		self.response = self.ser.read(15) #manual says that there are 14 bytes. I tried it and there seems to be an 
 											#an extra byte after the 9th byte.
-		return self.response
 		
 			
 
@@ -97,8 +99,14 @@ class CPB_Communication():
 		
 	def read_packet(self):
 		#implement a mechanism to tell me that after two tries 6CPB won't resend it anymore
+		#there must have been an error reading if we didn't get 15. 15 seems to be the right number of packets, don't know why
+
 		if self.response[14] != self.checksum_calc(self.response[:-1]):
-			self.write_packet(sucIndicator = False)
+			if self.checksum_tries == 2:
+				self.checksum_tries = 0
+				return
+			self.checksum_tries += 1
+			self.write_packet(bytearray([0x7F] + list(self.last_packet_sent[1:])))
 			self.read_packet()
 		self.track_power_status = self.get_bits(self.response[0], 0) #get the last bit. boolean
 		self.set_handsets_on()
@@ -113,15 +121,15 @@ class CPB_Communication():
 	#set all the relvant times and computes the lap times for the cars.
 	def set_all_times(self, print_update = False):
 		if self.carID == 0:
-			self.game_timer = self.received_time
+			self.game_timer = self.received_time 
 			return
 		#invalid carID. just ignore for now
 		if self.carID == 0b111:
 			return
 		else:
-			self.car_times[self.carID - 1] = [self.received_time - self.car_times[self.card_ID - 1][1], self.received_time]
+			self.car_times[self.carID - 1] = [self.received_time - self.car_times[self.carID - 1][1], self.received_time]
 			if print_update:
-				print("Last lap time for car " + str(self.CarID) + ": " + str(self.car_times[self.card_ID - 1][0]))
+				print("Last lap time for car " + str(self.carID) + ": " + str(self.car_times[self.carID - 1][0]))
 		
 			
 		
@@ -158,27 +166,28 @@ class CPB_Communication():
 										
 	
 
-
-worker = CPB_Communication()
-do = 1
-
-if do:
-	worker.write_packet(sucIndicator = True, secondCar = worker.car_byte(0,0, 10), ledByte = worker.led_byte(1,1,0,0,0,0,1,0))
-	print(worker.response[13])
-	worker.read_packet()
-
-if do != 1:
-
-	started = False
-	time_last_lap = 0
-	while True:
-		if not started:
-			worker.write_packet(sucIndicator = True, ledByte = worker.led_byte(1,1,0,0,0,0,1,0))
-			worker.write_packet(sucIndicator = True, firstCar = worker.car_byte(0,0,12), secondCar = worker.car_byte(0,0, 13), ledByte = worker.led_byte(1,0,0,0,0,0,1,1))
-			started = True
-
-		worker.write_packet(sucIndicator = True, firstCar = worker.car_byte(0,0,12), secondCar = worker.car_byte(0,0, 13), ledByte = worker.led_byte(1,0,0,0,0,0,1,1))
+if __name__ == "__main__":
+	worker = slotcarClient()
+	do = 0
+	worker.ser.flushOutput()
+	worker.ser.flushInput()
+	if do:
+		worker.write_packet(sucIndicator = True, secondCar = worker.car_byte(0,0, 10), ledByte = worker.led_byte(1,1,0,0,1,0,1,0))
+		print(worker.response[13])
 		worker.read_packet()
+
+	if do != 1:
+
+		started = False
+		time_last_lap = 0
+		while True:
+			if not started:
+				worker.write_packet(sucIndicator = True, ledByte = worker.led_byte(1,1,0,0,0,0,1,0))
+				worker.write_packet(sucIndicator = True, firstCar = worker.car_byte(0,0,12), secondCar = worker.car_byte(0,0, 13), ledByte = worker.led_byte(1,0,0,0,0,0,1,1))
+				started = True
+
+			worker.write_packet(sucIndicator = True, firstCar = worker.car_byte(0,0,12), secondCar = worker.car_byte(0,0, 13), ledByte = worker.led_byte(1,0,0,0,0,0,1,1))
+			worker.read_packet()
 	
 
 	
