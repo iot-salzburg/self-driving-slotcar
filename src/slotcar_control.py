@@ -22,7 +22,7 @@ class slotcarClient():
 0xDE,0xD9,0xD0,0xD7,0xC2,0xC5,0xCC,0xCB,0xE6,0xE1,0xE8,0xEF,0xFA,0xFD,0xF4,0xF3 ]
 	
 	def __init__(self):
-		self.ser = serial.Serial(port='/dev/ttyUSB1', baudrate=19200)
+		self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate=19200)
 		self.handsets_on = [0,0,0,0,0,0] #if the connection to the ith handset is established
 		self.handsets_info = [[0],[0],[0],[0],[0],[0]] #information about the ith handset. information in the array. index 0: brake boolea, index1: lane_change boolean index2: power int
 		self.response = None

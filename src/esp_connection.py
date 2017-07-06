@@ -22,29 +22,23 @@ class espClient():
     num_g = 2
     norm = [0, 0, 0]
     offsets = [0, 0, 0]
-    cal = False
     upper_bound = 32767
     lower_bound = -32768
     start = False
 
     # PANDAS dataframe to store all data
     data = pd.DataFrame()
-    # moving_average = [[], [], []]
-    # time_data = []
-    # delta_time_data = []  # to compute moving average. might be solved differently/better
+
     graph = None
-    last_update = 0
 
     fig = None
 
     # server_ip of mqtt host, type string.
     # port number, type int. (usually the mqtt port)
-    def __init__(self, server_ip="192.168.48.188", port=1883, plot=False, store=False, plot_dir=0, should_ai=False,
+    def __init__(self, server_ip="192.168.48.188", port=1883, plot=False, store=False, plot_dir=0,
                  plot_raw=False):
         self.server_ip = server_ip
         self.port = port
-
-        self.simpleAI = ai.simpleAI()
 
         self.client = paho.Client()
         self.client.on_connect = self.on_connect
@@ -52,12 +46,14 @@ class espClient():
 
         self.client.connect(server_ip, 1883)
 
+        self.calibrating = True # we are setting it to true from the beginning on. So it will start with calibration.
+        self.num_cal = 20 # can change how many data points to use for calibration
+        self.num_cal_so_far = 0 # using it to keep track of how many data points I have used so far. 
+        
         self.should_plot = plot
         self.should_store = store
         self.plot_dir = plot_dir
 
-        self.last_ai_time = 0
-        self.should_ai = should_ai
         self.plot_raw = plot_raw
 
     def on_connect(self, client, userdata, flags, rc):
@@ -70,9 +66,21 @@ class espClient():
     def on_message(self, client, userdata, msg):
         # to have the message in the right format. The first item in the split string is the type of message sent.
         # More info in ESP8266 code
-        true_msg = json.load(msg.payload.decode())
-        print(true_msg)
-        return
+        decoded_msg = msg.payload.decode(errors="replace")
+        # if decoding fails, just wait for next message. 
+        if decoded_msg == "U+FFFD":
+            return
+        true_msg = json.loads(decoded_msg)
+
+        if self.calibrating:
+            if self.num_cal_
+
+
+
+
+
+
+
         # command that tells us that we should get ready. calibration will start soon.
         if msg_indicator == "0":
             print(msg_body)
@@ -129,19 +137,8 @@ class espClient():
 
             self.calculate_moving_average(direction, new_acc)
 
-            if direction == 0 and len(
-                    self.moving_average[direction]) > 0 and time.time() - self.last_ai_time > 0.05 and self.should_ai:
-                self.last_ai_time = time.time()
-                temp_time = time.time()
-                self.simpleAI.main(self.moving_average[0][-1:][
-                                       0] * 9.8)
-                # calling the simple algorithm here. kinda weird. should make it more lean, kinda too bulcky
-            # print("Delta time: " + str(time.time() - temp_time))
-
             self.plot_data(direction)
-            if self.should_plot:
-                print("time: " + str(time_split[1]))
-                print(msg.topic + " " + chr(direction + ord('X')) + ": " + str(new_acc))
+
 
     def set_time_data(self, direction, time):
         # should be updated once i will fix how the esp transmits data. we will only use one time
