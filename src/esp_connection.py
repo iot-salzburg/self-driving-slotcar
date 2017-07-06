@@ -56,8 +56,8 @@ class EspClient:
         self.gyro = 250  # we get +/-self.gyro degrees/second
 
         # the range of the device. We are getting 16 bit values
-        self.range_positive = 2 ^ 15 - 1
-        self.range_negative = 2 ^ 15
+        self.range_positive = pow(2,15) - 1
+        self.range_negative = pow(2,15)
 
         # the names of the keys in the messages
         self.data_time = ["Time"]
@@ -75,6 +75,7 @@ class EspClient:
         # by connection failure
         client.subscribe("Test_topic")
         print("Connected to broker and topic")
+# TODO when the device restarts i have to build something in to recalibrate and all.
 
     # the call back for when a PUBLISH message is re   ceived from the server.
     def on_message(self, client, userdata, msg):
@@ -88,6 +89,7 @@ class EspClient:
 
         # I MIGHT HAVE ISSUES WITH DOING THE SLEEP HERE. MAYBE THE DATA TRAFFIC WILL JAM.
         if self.calibrating:
+            # handles first iteration to warn user 
             if self.num_cal_so_far == 0:
                 print("Place the object on a flat surface. Calibration will start in 3 seconds.")
                 time.sleep(1)
@@ -98,24 +100,32 @@ class EspClient:
                 print("3")
                 print("Calibration will start now. Do not move the object.")
                 self.num_cal_so_far = self.num_cal_so_far + 1
+            # handles the last cycle
+            elif self.num_cal_so_far == self.num_cal:
 
-            if self.num_cal_so_far == self.num_cal:
-                print("Calibration has ended.")
                 self.num_cal_so_far = 0
                 self.calibrating = False
-
-                self.calibration_data.drop(["Time"])
+                self.calibration_data.drop(["Time"], axis=1)
+                print(self.calibration_data)
                 self.calibration_data = self.calibration_data.applymap(lambda x: x / self.num_cal)
-                self.calibration_data["AcZ"] = self.calibration_data["AcZ"].applymap(
-                    lambda x: x - self.range_positive / 2)
+                print(self.calibration_data)
+
+                self.calibration_data["AcZ"] = self.calibration_data["AcZ"].map(
+                    lambda x: x - (self.range_positive / 2))
+                print(self.calibration_data)
+
                 # next 2 lines end loading output
                 sys.stdout.write("\n")
                 sys.stdout.flush()
                 # just to set the data, in case we have to calibrate while the program is running
                 # but someone pressed RST on the ESP.
                 self.data = pd.DataFrame()
+                print(self.calibration_data)
+                print("Calibration has ended.")
+                time.sleep(3)
+            # handles the middle part of the calibration
             else:
-                # next 2 lines handle the loading output
+                # next 2 lines handle the loading screen output
                 sys.stdout.write("#")
                 sys.stdout.flush()
                 if self.num_cal_so_far == 1:
@@ -123,14 +133,20 @@ class EspClient:
                     self.calibration_data = pd.DataFrame.from_dict(true_msg)
                 else:
                     self.calibration_data += pd.DataFrame.from_dict(true_msg)
+                self.num_cal_so_far = self.num_cal_so_far + 1
+            
         else:
             temp_df = pd.DataFrame.from_dict(true_msg)
+            print(temp_df)
             temp_df[self.data_acceleration] = (temp_df[self.data_acceleration] - self.calibration_data[
                 self.data_acceleration]) / self.range_positive * self.gravity
+            print(temp_df)
             temp_df[self.data_gyro] = (temp_df[self.data_gyro] - self.calibration_data[
                 self.data_gyro]) / self.range_positive * self.gyro
+            print(temp_df)
             self.data = self.data.append(temp_df)
             print(temp_df)
+            time.sleep(5)
 
 
 
