@@ -1,15 +1,15 @@
 import paho.mqtt.client as paho
 import sys as sys
 import time
-import matplotlib
 import pandas as pd
+import multiprocessing as mp
 
-# have to do this to set backend of matplotlib. otherwise now graph is displayed
-matplotlib.use("TKAgg")
-import matplotlib.pyplot as plt
+
+
 import numpy as np
 import json
-import simple_ai_algorithm as ai
+
+
 
 
 # possible improvement. Only loop data when ready to process data. otherwise we will get an issue with queues.
@@ -37,7 +37,8 @@ class EspClient:
         self.client = paho.Client()
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
-
+        self.server_ip=server_ip
+        self.port = 1883
         self.client.connect(server_ip, 1883)
 
         self.calibrating = True  # we are setting it to true from the beginning on. So it will start with calibration.
@@ -48,10 +49,12 @@ class EspClient:
         # will be initialized in calibration process.
         self.calibration_data = None
 
-        # will be initialized after calibration
+        # will be set by process which initializes this class. We are not
+        # going to worry about the case where the esp resets and will hence
+        # not reinitialize this.
         self.data = None
 
-        # MPU additional numbers which should be adjusted
+        # MPU additional numbers which can be adjusted
         self.gravity = 2  # we get values of +/-self.gravity values
         self.gyro = 250  # we get +/-self.gyro degrees/second
 
@@ -64,13 +67,13 @@ class EspClient:
         self.data_gyro = ["GyroX", "GyroY", "GyroZ"]
         self.data_acceleration = ["AcX", "AcY", "AcZ"]
 
-        self.should_plot = plot
-        self.should_store = store
-        self.plot_dir = plot_dir
-
-        self.plot_raw = plot_raw
-
         self.debugging = debugging
+
+        self.index_data = {}
+        self.norm_const = np.empty([7])
+
+        # the time at which i started to wait. make -1 if not yet started.
+        self.wait_time = -1
 
     def on_connect(self, client, userdata, flags, rc):
         # subscription will always be automatically renewed here. even
@@ -79,10 +82,6 @@ class EspClient:
         print("Connected to broker and topic")
 # TODO when the device restarts i have to build something in to recalibrate and all.
 
-    # unsubscribe and subscribe to a topic quickly when there might be issues with a message jam.
-    def unsub_sub(self, topic="Test_topic"):
-        self.client.unsubscribe(topic)
-        self.client.subscribe(topic)
 
 
     # the call back for when a PUBLISH message is received from the server.
@@ -99,155 +98,84 @@ class EspClient:
         if self.calibrating:
             # handles first iteration to warn user 
             if self.num_cal_so_far == 0:
-                print("Place the object on a flat surface. Calibration will start in 3 seconds.")
-                time.sleep(1)
-                print("1")
-                time.sleep(1)
-                print("2")
-                time.sleep(1)
-                print("3")
-                print("Calibration will start now. Do not move the object.")
-                self.unsub_sub()
-                self.num_cal_so_far = self.num_cal_so_far + 1
+                if self.wait_time == -1:
+                    print("Place the object on a flat surface. Calibration will start in 3 seconds.")
+                    self.wait_time = time.time()
+                elif time.time() - self.wait_time >= 3:
+                    print("Calibration will start now. Do not move the object.")
+                    self.num_cal_so_far = self.num_cal_so_far + 1
+                    self.wait_time = -1
+
 
             # handles the last cycle
             elif self.num_cal_so_far == self.num_cal:
+                if self.wait_time == -1:
+                    self.calibration_data = self.calibration_data / self.num_cal
+                    self.calibration_data[self.index_data["AcZ"]] = self.calibration_data[self.index_data["AcZ"]]- (self.range_positive / 2)
+                    # next 2 lines end loading output
+                    sys.stdout.write("\n")
+                    sys.stdout.flush() 
+                    print("Calibration has ended.")
+                    print("Data transfer will start in one second.")
+                    self.wait_time = time.time()
+                    self.init_queue.put(self.calibration_data)
+                elif time.time() - self.wait_time >= 1:
+                    self.wait_time = -1
+                    self.num_cal_so_far = 0
+                    self.calibrating = False
 
-                self.num_cal_so_far = 0
-                self.calibrating = False
-                self.calibration_data.drop(["Time"], axis=1)
-                if self.debugging:
-                    print(self.calibration_data)
-                self.calibration_data = self.calibration_data.applymap(lambda x: x / self.num_cal)
-                if self.debugging:
-                    print(self.calibration_data)
-
-                self.calibration_data["AcZ"] = self.calibration_data["AcZ"].map(
-                    lambda x: x - (self.range_positive / 2))
-                if self.debugging:
-                    print(self.calibration_data)
-
-                # next 2 lines end loading output
-                sys.stdout.write("\n")
-                sys.stdout.flush()
-                # just to set the data, in case we have to calibrate while the program is running
-                # but someone pressed RST on the ESP.
-                self.data = pd.DataFrame()
-                print(self.calibration_data)
-                print("Calibration has ended.")
-                time.sleep(3)
             # handles the middle part of the calibration
             else:
-                # next 2 lines handle the loading screen output
+                #set calibration np
+                if self.num_cal_so_far == 1:
+                    keys = list(true_msg[0].keys())
+                    # so arithmatic will be easier later on
+                    true_msg[0]["Time"] = 0
+                    for i in range(len(keys)):
+                        if "Ac" in keys[i]:
+                            self.norm_const[i] = self.gravity/self.range_positive
+                        elif "Gyro" in keys[i]:
+                            self.norm_const[i] = self.gyro/self.range_positive
+                        else:
+                            self.norm_const[i] = 1
+                        self.index_data[keys[i]] = i
+                    self.init_queue.put(self.norm_const)
+                    self.init_queue.put(self.index_data)
+                    self.calibration_data = np.array(list(true_msg[0].values()),float)
+                else:
+                    self.calibration_data = self.calibration_data + np.array(list(true_msg[0].values()),float)
+                self.num_cal_so_far = self.num_cal_so_far + 1
+
+                 # next 2 lines handle the loading screen output
                 sys.stdout.write("#")
                 sys.stdout.flush()
-                
-                if self.num_cal_so_far == 1:
-                    # Also initializing pd.DataFrame here.
-                    self.calibration_data = pd.DataFrame.from_dict(true_msg)
-                else:
-                    self.calibration_data += pd.DataFrame.from_dict(true_msg)
-                self.num_cal_so_far = self.num_cal_so_far + 1
             
         else:
-            temp_df = pd.DataFrame.from_dict(true_msg)
+            temp_data = np.array(list(true_msg[0].values()), float)
+            self.data.put(temp_data) # message is sent in a list.
             if self.debugging:
-                print(temp_df)
-            temp_df[self.data_acceleration] = (temp_df[self.data_acceleration] - self.calibration_data[
-                self.data_acceleration]) / self.range_positive * self.gravity
-            if self.debugging:
-                print(temp_df)
-            temp_df[self.data_gyro] = (temp_df[self.data_gyro] - self.calibration_data[
-                self.data_gyro]) / self.range_positive * self.gyro
-            if self.debugging:
-                print(temp_df)
-            self.data = self.data.append(temp_df)
-            if self.debugging:
-                print(temp_df)
+                print(temp_data)
+
+    # set the queue through which data should be received.
+    def start_esp(self, data_queue,init_queue):
+        self.data = data_queue
+        self.init_queue = init_queue
+        self.client.loop_forever()
+
+
+    def disconnect(self):
+        self.client.disconnect()
+
+    def connect():
+        self.client.connect(self.server_ip, self.port)
 
 
 
 
 
-            #
-            #         self.acc_data[direction].append(new_acc)
-            #
-            #         self.set_time_data(direction, int(time_split[1]))
-            #
-            #         self.calculate_moving_average(direction, new_acc)
-            #
-            #         self.plot_data(direction)
-            #
-            #
-            # def set_time_data(self, direction, time):
-            #     # should be updated once i will fix how the esp transmits data. we will only use one time
-            #     # data point for all 3 axis.
-            #     if direction != 0:
-            #         return
-            #     self.delta_time_data.append(time)
-            #     # doing this since i am assuimnig that one addition is faster than calling
-            #     # cumsum all the time. this is only needed to plot data anyway
-            #     if not self.should_plot:
-            #         return
-            #     if len(self.time_data) == 0:
-            #         self.time_data.append(time)
-            #     else:
-            #         last_time = self.time_data[-1:][0]  # maybe inefficient
-            #         self.time_data.append(time + last_time)
-            #
-            # # calculates and sets the moving average
-            # # direction: tells us which axis we are getting data from (int)
-            # # acc_curr: the data we received (float)
-            # # call after we set and received acceleration data
-            # # only to be done if we are plotting
-            # def calculate_moving_average(self, direction, acc_curr):
-            #
-            #     N = 20  # how many data points to use for moving average
-            #     if len(self.acc_data[direction]) <= N:
-            #         self.moving_average[direction].append(acc_curr)
-            #     else:
-            #         sum_time = 0
-            #         acc_np = np.array(self.acc_data[direction][-N:])
-            #         time_np = np.array(self.delta_time_data[-N:])
-            #         average = np.cumsum(acc_np * time_np)[-1:] / (
-            #         np.cumsum(time_np)[-1:][0])  # maybe weird to index again. don't like the denominator
-            #         # average = np.cumsum(acc_np)[-1:][0]/N
-            #         self.moving_average[direction].append(average)
-            #
-            # # handles the plotting of the given data
-            # def plot_data(self, direction):
-            #     if not (self.should_plot and (len(self.acc_data[self.plot_dir]) >= 500 and direction == self.plot_dir and (
-            #             self.last_update == 0 or time.time() - self.last_update > 1))):
-            #         return
-            #     far_back = 500
-            #     data_to_use = None
-            #     if self.plot_raw:
-            #         data_to_use = self.acc_data[direction][-far_back:]
-            #     else:
-            #         data_to_use = self.moving_average[direction][-far_back:]
-            #     self.last_update = time.time()
-            #     if self.graph == None:
-            #         # put plt in interactive mode
-            #         plt.ion()
-            #         self.graph = plt.plot(self.time_data[-far_back:], data_to_use, '.')[0]
-            #     self.graph.set_ydata(data_to_use)
-            #     self.graph.set_xdata(self.time_data[-far_back:])
-            #     plt.axis([min(self.time_data[-far_back:]), max(self.time_data[-far_back:]), -2, 2])
-            #     plt.draw()
-            #     plt.pause(0.01)
-            #
-            # # stores n data points locally. To store data, let the program run and the press reset.
-            # def store_data(self):
-            #     if not self.should_store:
-            #         return
-            #     t = self.delta_time_data
-            #     a = self.acc_data
-            #     how_long = min(len(t), len(a[0]), len(a[1]), len(a[2]))
-            #     to_store = [t[:how_long], a[0][:how_long], a[1][:how_long], a[2][:how_long]]
-            #     with open("mylist.txt", "w") as f:  # in write mode
-            #         f.write(json.dumps(to_store))
+
 
 if __name__ == "__main__":
-    client = EspClient()
+    client = EspClient(debugging=True)
     # good loop function since it handles reconnection for us
     client.client.loop_forever()
