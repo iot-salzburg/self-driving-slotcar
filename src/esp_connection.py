@@ -30,7 +30,7 @@ class EspClient:
     # server_ip of mqtt host, type string.
     # port number, type int. (usually the mqtt port)
     def __init__(self, server_ip="192.168.48.188", port=1883, plot=False, store=False, plot_dir=0,
-                 plot_raw=False):
+                 plot_raw=False, debugging=False):
         self.server_ip = server_ip
         self.port = port
 
@@ -70,6 +70,8 @@ class EspClient:
 
         self.plot_raw = plot_raw
 
+        self.debugging = debugging
+
     def on_connect(self, client, userdata, flags, rc):
         # subscription will always be automatically renewed here. even
         # by connection failure
@@ -77,7 +79,13 @@ class EspClient:
         print("Connected to broker and topic")
 # TODO when the device restarts i have to build something in to recalibrate and all.
 
-    # the call back for when a PUBLISH message is re   ceived from the server.
+    # unsubscribe and subscribe to a topic quickly when there might be issues with a message jam.
+    def unsub_sub(self, topic="Test_topic"):
+        self.client.unsubscribe(topic)
+        self.client.subscribe(topic)
+
+
+    # the call back for when a PUBLISH message is received from the server.
     def on_message(self, client, userdata, msg):
         # to have the message in the right format. The first item in the split string is the type of message sent.
         # More info in ESP8266 code
@@ -99,20 +107,25 @@ class EspClient:
                 time.sleep(1)
                 print("3")
                 print("Calibration will start now. Do not move the object.")
+                self.unsub_sub()
                 self.num_cal_so_far = self.num_cal_so_far + 1
+
             # handles the last cycle
             elif self.num_cal_so_far == self.num_cal:
 
                 self.num_cal_so_far = 0
                 self.calibrating = False
                 self.calibration_data.drop(["Time"], axis=1)
-                print(self.calibration_data)
+                if self.debugging:
+                    print(self.calibration_data)
                 self.calibration_data = self.calibration_data.applymap(lambda x: x / self.num_cal)
-                print(self.calibration_data)
+                if self.debugging:
+                    print(self.calibration_data)
 
                 self.calibration_data["AcZ"] = self.calibration_data["AcZ"].map(
                     lambda x: x - (self.range_positive / 2))
-                print(self.calibration_data)
+                if self.debugging:
+                    print(self.calibration_data)
 
                 # next 2 lines end loading output
                 sys.stdout.write("\n")
@@ -128,6 +141,7 @@ class EspClient:
                 # next 2 lines handle the loading screen output
                 sys.stdout.write("#")
                 sys.stdout.flush()
+                
                 if self.num_cal_so_far == 1:
                     # Also initializing pd.DataFrame here.
                     self.calibration_data = pd.DataFrame.from_dict(true_msg)
@@ -137,16 +151,20 @@ class EspClient:
             
         else:
             temp_df = pd.DataFrame.from_dict(true_msg)
-            print(temp_df)
+            if self.debugging:
+                print(temp_df)
             temp_df[self.data_acceleration] = (temp_df[self.data_acceleration] - self.calibration_data[
                 self.data_acceleration]) / self.range_positive * self.gravity
-            print(temp_df)
+            if self.debugging:
+                print(temp_df)
             temp_df[self.data_gyro] = (temp_df[self.data_gyro] - self.calibration_data[
                 self.data_gyro]) / self.range_positive * self.gyro
-            print(temp_df)
+            if self.debugging:
+                print(temp_df)
             self.data = self.data.append(temp_df)
-            print(temp_df)
-            time.sleep(5)
+            if self.debugging:
+                print(temp_df)
+
 
 
 
@@ -229,7 +247,7 @@ class EspClient:
             #     with open("mylist.txt", "w") as f:  # in write mode
             #         f.write(json.dumps(to_store))
 
-
-client = EspClient()
-# good loop function since it handles reconnection for us
-client.client.loop_forever()
+if __name__ == "__main__":
+    client = EspClient()
+    # good loop function since it handles reconnection for us
+    client.client.loop_forever()
