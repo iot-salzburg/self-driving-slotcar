@@ -22,6 +22,7 @@ class slotcarClient():
 0xDE,0xD9,0xD0,0xD7,0xC2,0xC5,0xCC,0xCB,0xE6,0xE1,0xE8,0xEF,0xFA,0xFD,0xF4,0xF3 ]
 	
 	def __init__(self):
+		# set the serial. check for which port. In the raspberry put it in the top slot.
 		self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate=19200)
 		self.handsets_on = [0,0,0,0,0,0] #if the connection to the ith handset is established
 		self.handsets_info = [[0],[0],[0],[0],[0],[0]] #information about the ith handset. information in the array. index 0: brake boolea, index1: lane_change boolean index2: power int
@@ -55,7 +56,6 @@ class slotcarClient():
 		pre_output.append(ledByte)
 		pre_output.append(self.checksum_calc(pre_output))
 		self.last_packet_sent = bytearray(pre_output)
-		#print(self.last_packet_sent)
 		self.ser.write(self.last_packet_sent)
 		self.response = self.ser.read(15) #manual says that there are 14 bytes. I tried it and there seems to be an 
 											#an extra byte after the 9th byte.
@@ -134,7 +134,7 @@ class slotcarClient():
 			
 		
 		
-	#computes the time passed as given by the last response response. 
+	#computes the real time from the encoded byte time passed as given by the last response. 
 	def compute_response_time(self, bytes_times=None):
 		if bytes_times == None:
 			bytes_times = list(self.response)[9:13][::-1]

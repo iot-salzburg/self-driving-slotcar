@@ -111,6 +111,7 @@ class EspClient:
             elif self.num_cal_so_far == self.num_cal:
                 if self.wait_time == -1:
                     self.calibration_data = self.calibration_data / self.num_cal
+                    # sensitivity will affect self.range_positive/2. will not be one anymore TODO
                     self.calibration_data[self.index_data["AcZ"]] = self.calibration_data[self.index_data["AcZ"]]- (self.range_positive / 2)
                     # next 2 lines end loading output
                     sys.stdout.write("\n")
@@ -126,11 +127,12 @@ class EspClient:
 
             # handles the middle part of the calibration
             else:
+                true_msg[0]["Time"] = 0
                 #set calibration np
                 if self.num_cal_so_far == 1:
                     keys = list(true_msg[0].keys())
                     # so arithmatic will be easier later on
-                    true_msg[0]["Time"] = 0
+                    # doing two things at once. setting const_norm and setting index_data
                     for i in range(len(keys)):
                         if "Ac" in keys[i]:
                             self.norm_const[i] = self.gravity/self.range_positive

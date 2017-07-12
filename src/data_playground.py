@@ -24,6 +24,8 @@ class DataPlayground:
 
         self.graph = None
 
+        self.moving_averages = np.empty([0,7])
+
     # n is the number of data points I will pull
     def get_new_data(self):
         size = self.esp_data.qsize()
@@ -38,8 +40,12 @@ class DataPlayground:
             self.np_data = temp
         else:
             self.np_data = np.append(self.np_data, temp, axis=0)
+        # plotting here
+
+        self.calculate_moving_average(self.index_data["GyroX"])
+        # plotting here
         if self.np_data.shape[0] > 500:
-            self.plot_data(self.index_data["AcY"])
+            self.plot_data(self.index_data["GyroX"])
         
         
     def init_from_queue(self):
@@ -51,18 +57,54 @@ class DataPlayground:
         
     def plot_data(self, direction):
         far_back = 500
-        data_to_use = self.np_data[-far_back:, direction]
+        data_to_use = self.moving_averages[-far_back:, direction]
         time_to_use = self.np_data[-far_back:, self.index_data["Time"]]
         if self.graph == None:
             # put plt in interactive mode
             plt.ion()
-            self.graph = plt.plot(time_to_use, data_to_use, '.')[0]
+            self.graph = plt.plot(time_to_use, data_to_use)[0]
         self.graph.set_ydata(data_to_use)
         self.graph.set_xdata(time_to_use)
-        plt.axis([min(time_to_use), max(time_to_use), -2, 2])
+        plt.axis([min(time_to_use), max(time_to_use), -250, 250])
         plt.draw()
         plt.pause(0.01)
 
+    # calculates and sets the moving average
+    # direction: tells us which axis we are getting data from (int)
+    # acc_curr: the data we received (float)
+    # call after we set and received acceleration data
+    # only to be done if we are plotting
+
+    #TODO add time scaling
+    def calculate_moving_average(self, direction):
+        N = 20
+        if self.np_data.shape[0] < N:
+            return
+
+        data = self.np_data[self.moving_averages.shape[0]:,direction]
+        window = np.repeat(1,N)/N
+        temp = None
+
+        if self.moving_averages.shape[0] < N:
+            data = data * self.data_np[self.index_data["Time"]][self.moving_averages.shape[0]:,]
+            temp = np.convolve(data, window, 'same')
+        else:
+            data = np.append(self.moving_averages[-19:,direction], data)
+            temp = np.convolve(data, window, 'valid')
+        self.moving_averages = np.append(self.moving_averages, np.empty([temp.shape[0], 7]), axis=0)
+        self.moving_averages[-temp.shape[0]:,direction] = temp
+        
+
+
+
+
+
+
+
+
+
+
+            
 
 
     
@@ -91,26 +133,8 @@ class DataPlayground:
             #     else:
             #         last_time = self.time_data[-1:][0]  # maybe inefficient
             #         self.time_data.append(time + last_time)
-            #
-            # # calculates and sets the moving average
-            # # direction: tells us which axis we are getting data from (int)
-            # # acc_curr: the data we received (float)
-            # # call after we set and received acceleration data
-            # # only to be done if we are plotting
-            # def calculate_moving_average(self, direction, acc_curr):
-            #
-            #     N = 20  # how many data points to use for moving average
-            #     if len(self.acc_data[direction]) <= N:
-            #         self.moving_average[direction].append(acc_curr)
-            #     else:
-            #         sum_time = 0
-            #         acc_np = np.array(self.acc_data[direction][-N:])
-            #         time_np = np.array(self.delta_time_data[-N:])
-            #         average = np.cumsum(acc_np * time_np)[-1:] / (
-            #         np.cumsum(time_np)[-1:][0])  # maybe weird to index again. don't like the denominator
-            #         # average = np.cumsum(acc_np)[-1:][0]/N
-            #         self.moving_average[direction].append(average)
-            #
+        #
+
              # handles the plotting of the given data
 
             #
