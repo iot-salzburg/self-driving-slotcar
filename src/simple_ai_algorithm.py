@@ -8,14 +8,14 @@ import Data_Manipulation as dm
 
 class SimpleAI():
     def __init__(self, carID=2):
-        self.max_acceleration = 9.8 * 0.15  # m/s^2 Calculates by estimating force of friction with a slope and raeding off accelerometer data
-        self.slotcar_client = scc.slotcarClient()
-        self.error_margin = 1  # m/s^2
+        self.max_acceleration = 1 * 0.23  # m/9.8*s^2 Calculates by estimating force of friction with a slope and raeding off accelerometer data
+        self.slotcar_client = scc.SlotcarClient()
+        self.error_margin = 0.09  # m/s^2
         self.carID = carID
         self.game_started = False
         self.last_power = 5
         self.min_power = 5
-        self.max_power = 30  # max potential as shown in protocol. we can adjust the max we want here
+        self.max_power = 25  # max potential as shown in protocol. we can adjust the max we want here
 
         # set in init_from_queue
         self.gravity = -1
@@ -39,14 +39,15 @@ class SimpleAI():
         self.init_from_queue()
         while True:
             self.get_new_data()
-            last_cross_acceleration = self.data[-20:, self.index_data["AcY"]].cumsum()[-1:]/20
-            if abs(last_cross_acceleration) > self.max_acceleration:
+            last = self.data[-5:, self.index_data["AcX"]].cumsum()[-1:]/5
+            # last = self.data[-1: , self.index_data["AcX"]]
+            print(last)
+            if abs(last) > self.max_acceleration:
                 # call function which reduces acceleration
                 self.change_power(increase=False)
-                return
-            elif abs(last_cross_acceleration) > self.max_acceleration - self.error_margin:
+            elif abs(last) > self.max_acceleration - self.error_margin:
                 # retain current speed
-                return
+                continue
             else:
                 # increase current speed
                 self.change_power(increase=True)
@@ -55,9 +56,14 @@ class SimpleAI():
         if increase:
             if self.last_power + 1 <= self.max_power:
                 self.last_power += 1
+            else:
+                self.last_power = self.max_power
         else:
-            if self.last_power - 10 >= self.min_power:
-                self.last_power -= 10
+            if self.last_power - 6 >= self.min_power:
+                self.last_power -= 6
+            else:
+                self.last_power = self.min_power
+        print(self.last_power)
         self.slotcar_client.write_packet(sucIndicator=True,
                                          secondCar=self.slotcar_client.car_byte(0, 0, int(self.last_power)),
                                          ledByte=self.slotcar_client.led_byte(1, 0, 0, 0, 0, 0, 1, 0))
@@ -78,8 +84,8 @@ class SimpleAI():
 
     # currently the data is put in and got in this order
     def init_from_queue(self):
-        while self.init_queue.qsize != 5:
-            continue
+        while self.init_queue.qsize() != 3:
+            time.sleep(1)
         self.index_data = self.init_queue.get()
         self.gravity = self.init_queue.get()
         self.gyro = self.init_queue.get()
@@ -88,11 +94,12 @@ class SimpleAI():
     def start_me(self):
         # not setting it as instance variable since we can not
         # properly communicate with it anyway.
-        espClient = esp.EspClient()
+        espClient = esp.EspClient(debugging=False)
         self.init_queue = mp.Queue()
         self.esp_data = mp.Queue()
         p = mp.Process(target=espClient.start_esp, args=(self.esp_data, self.init_queue,))
         p.start()
+        self.main()
 
 
 if __name__ == "__main__":

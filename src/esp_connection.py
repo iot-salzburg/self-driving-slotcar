@@ -93,7 +93,6 @@ class EspClient:
             elif self.num_cal_so_far == self.num_cal:
                 if self.wait_time == -1:
                     self.calibration_data = self.calibration_data / self.num_cal
-                    # sensitivity will affect self.range_positive/2. will not be one anymore TODO
                     self.calibration_data[self.index_data["AcZ"]] = self.calibration_data[self.index_data["AcZ"]] - (
                         self.range_positive / self.gravity)
                     # next 2 lines end loading output
@@ -140,12 +139,14 @@ class EspClient:
                 sys.stdout.flush()
 
         else:
+
             temp_data = np.array(list(true_msg[0].values()), float)
             if self.raw_data:
                 self.data.put(temp_data)  # message is sent in a list.
             else:
                 self.data.put((temp_data - self.calibration_data) * self.norm_const)
             if self.debugging:
+                print(list(true_msg[0].values()))
                 print(temp_data)
 
     # set the queue through which data should be received.
