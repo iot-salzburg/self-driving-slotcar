@@ -1,0 +1,299 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>esp_connection &#8212; Salzburg_Research 1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for esp_connection</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">paho.mqtt.client</span> <span class="k">as</span> <span class="nn">paho</span>
+<span class="kn">import</span> <span class="nn">sys</span> <span class="k">as</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">multiprocessing</span> <span class="k">as</span> <span class="nn">mp</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+
+<span class="c1"># names.keys of items in messages &quot;Time&quot;, &quot;GyroX&quot;, &quot;GyroY&quot;, &quot;GyroZ&quot;, &quot;AcX&quot;, &quot;AcY&quot;, &quot;AcZ&quot;</span>
+
+<span class="c1"># possible improvement. Only loop data when ready to process data. otherwise we will get an issue with queues.</span>
+<span class="c1"># solution would be to send data less frequently but in bigger packets or</span>
+<span class="c1"># to have multiple mqtt queues. something to consider for later. does not seem significant now.</span>
+
+<div class="viewcode-block" id="EspClient"><a class="viewcode-back" href="../code.html#esp_connection.EspClient">[docs]</a><span class="k">class</span> <span class="nc">EspClient</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The class which handles the communication with the ESP device.</span>
+<span class="sd">    Relevant attributes:</span>
+<span class="sd">        self.server_ip:</span>
+<span class="sd">                    The ip address of the mqtt host. In the current case, we are using a Raspberry pi, which </span>
+<span class="sd">                    has to be connected over sensornet.</span>
+<span class="sd">        self.port:</span>
+<span class="sd">                The port for mqtt services. Standard is 1883.</span>
+<span class="sd">        self.debugging:</span>
+<span class="sd">                    Whether to print certain statements and print all the data which is received.</span>
+<span class="sd">        self.raw_data:</span>
+<span class="sd">                    Should the data be put in the queue for the algorithm without being normalized and offset.</span>
+<span class="sd">        self.num_cal:</span>
+<span class="sd">                How many data points should be used to calibrate (can be modified if wanted).</span>
+<span class="sd">        self.data:</span>
+<span class="sd">                Is the queue which we receive from the baseAI class through which we can communicate the data we </span>
+<span class="sd">                receive.</span>
+<span class="sd">        self.gravity:</span>
+<span class="sd">                The gravity range setting of the MPU. We get +/-self.gravity m/s^2 values.</span>
+<span class="sd">        self.gyro:</span>
+<span class="sd">                The gyroscope range setting of the MPU. We get +/-self.gyro degrees/second.</span>
+<span class="sd">        self.index_data:</span>
+<span class="sd">                    A mapping of names  &quot;Time&quot;, &quot;GyroX&quot;, &quot;GyroY&quot;, &quot;GyroZ&quot;, &quot;AcX&quot;, &quot;AcY&quot;, &quot;AcZ&quot; to indexes in the </span>
+<span class="sd">                    self.data array (2nd level). </span>
+<span class="sd">        self.norm_const:</span>
+<span class="sd">                    The normalization constants for calculating the adjusted data values received from the esp.</span>
+<span class="sd">                    e.g. AcX_data has to be transformed to (AcX_data - offset) * norm_const = </span>
+<span class="sd">                    (AcX_data - offset)/self.range_pos * self. gravity.</span>
+<span class="sd">        self.init_queue:</span>
+<span class="sd">                    The multiprocessing queue through which all</span>
+<span class="sd">                    relevant data which is not sensor data will be transmitted. The first item will tell</span>
+<span class="sd">                    how many elements to expect.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">server_ip</span><span class="o">=</span><span class="s2">&quot;192.168.48.188&quot;</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">1883</span><span class="p">,</span> <span class="n">debugging</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">raw_data</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server_ip</span> <span class="o">=</span> <span class="n">server_ip</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span> <span class="o">=</span> <span class="n">paho</span><span class="o">.</span><span class="n">Client</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">on_connect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_connect</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">on_message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server_ip</span> <span class="o">=</span> <span class="n">server_ip</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">port</span> <span class="o">=</span> <span class="n">port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">server_ip</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">calibrating</span> <span class="o">=</span> <span class="kc">True</span>  <span class="c1"># we are setting it to true from the beginning on. So it will start with calibration.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_cal</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># can change how many data points to use for calibration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_cal_so_far</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># using it to keep track of how many data points I have used so far.</span>
+
+        <span class="c1"># Use this for both summing up the initial data and then storing the calibration values.</span>
+        <span class="c1"># will be initialized in calibration process.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calibration_data</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># MPU additional numbers which can be adjusted</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gravity</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># we get values of +/-self.gravity values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gyro</span> <span class="o">=</span> <span class="mi">250</span>  <span class="c1"># we get +/-self.gyro degrees/second</span>
+
+        <span class="c1"># the range of the device. We are getting 16 bit values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">range_positive</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">range_negative</span> <span class="o">=</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">debugging</span> <span class="o">=</span> <span class="n">debugging</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">index_data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">norm_const</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="mi">7</span><span class="p">])</span>
+
+        <span class="c1"># the time at which i started to wait. make -1 if not yet started.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wait_time</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+        <span class="c1"># whether to return only raw data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_data</span> <span class="o">=</span> <span class="n">raw_data</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_queue</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="EspClient.on_connect"><a class="viewcode-back" href="../code.html#esp_connection.EspClient.on_connect">[docs]</a>    <span class="k">def</span> <span class="nf">on_connect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">rc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;subscription will always be automatically renewed here. even</span>
+<span class="sd">        by connection failure&quot;&quot;&quot;</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="s2">&quot;Test_topic&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Connected to broker and topic&quot;</span><span class="p">)</span></div>
+
+    <span class="c1"># TODO Note, we are not recalibrating when the device restarts.</span>
+    <span class="c1"># the call back for when a PUBLISH message is received from the server.</span>
+<div class="viewcode-block" id="EspClient.on_message"><a class="viewcode-back" href="../code.html#esp_connection.EspClient.on_message">[docs]</a>    <span class="k">def</span> <span class="nf">on_message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">userdata</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Will be called when we receive a message. </span>
+<span class="sd">        This method calibrates, transforms and stores the data accoridingly.&quot;&quot;&quot;</span>
+        <span class="n">decoded_msg</span> <span class="o">=</span> <span class="n">msg</span><span class="o">.</span><span class="n">payload</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">)</span>
+        <span class="c1"># if decoding fails, just wait for next message. </span>
+        <span class="k">if</span> <span class="n">decoded_msg</span> <span class="o">==</span> <span class="s2">&quot;U+FFFD&quot;</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">true_msg</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">decoded_msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">calibrating</span><span class="p">:</span>
+            <span class="c1"># handles first iteration to warn user </span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_cal_so_far</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_time</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Place the object on a flat surface. Calibration will start in 3 seconds.&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">wait_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_time</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Calibration will start now. Do not move the object.&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">num_cal_so_far</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_cal_so_far</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">wait_time</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+            <span class="c1"># handles the last cycle</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_cal_so_far</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_cal</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_time</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">calibration_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calibration_data</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_cal</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">calibration_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_data</span><span class="p">[</span><span class="s2">&quot;AcZ&quot;</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calibration_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">index_data</span><span class="p">[</span><span class="s2">&quot;AcZ&quot;</span><span class="p">]]</span> <span class="o">-</span> <span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">range_positive</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">gravity</span><span class="p">)</span>
+                    <span class="c1"># next 2 lines end loading output</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Calibration has ended.&quot;</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Data transfer will start in one second.&quot;</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">wait_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_data</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">init_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">calibration_data</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">init_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gravity</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">init_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gyro</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">wait_time</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">wait_time</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">num_cal_so_far</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">calibrating</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="c1"># handles the middle part of the calibration</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">true_msg</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;Time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="c1"># set calibration np</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_cal_so_far</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">true_msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                    <span class="c1"># so arithmatic will be easier later on</span>
+                    <span class="c1"># doing two things at once. setting const_norm and setting index_data</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)):</span>
+                        <span class="k">if</span> <span class="s2">&quot;Ac&quot;</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">norm_const</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gravity</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">range_positive</span>
+                        <span class="k">elif</span> <span class="s2">&quot;Gyro&quot;</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">norm_const</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gyro</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">range_positive</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">norm_const</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">index_data</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">i</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_data</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">init_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">norm_const</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">init_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index_data</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">calibration_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">true_msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="nb">float</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">calibration_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calibration_data</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">true_msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="nb">float</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">num_cal_so_far</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_cal_so_far</span> <span class="o">+</span> <span class="mi">1</span>
+
+                <span class="c1"># next 2 lines handle the loading screen output</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">temp_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">true_msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="nb">float</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_data</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">temp_data</span><span class="p">)</span>  <span class="c1"># message is sent in a list.</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="n">temp_data</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">calibration_data</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">norm_const</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debugging</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">true_msg</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">temp_data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EspClient.start_esp"><a class="viewcode-back" href="../code.html#esp_connection.EspClient.start_esp">[docs]</a>    <span class="k">def</span> <span class="nf">start_esp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_queue</span><span class="p">,</span> <span class="n">init_queue</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Call this method to start the communication with the ESP device. Also, provide a </span>
+<span class="sd">        multiprocessing queue through which the esp can communicate its data.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data_queue</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_queue</span> <span class="o">=</span> <span class="n">init_queue</span>
+        <span class="c1"># put in how many elements to expect.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_data</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">loop_forever</span><span class="p">()</span></div></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">EspClient</span><span class="p">(</span><span class="n">debugging</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># good loop function since it handles reconnection for us</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">loop_forever</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Salzburg_Research</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../code.html">Code Documentation</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Daniel Lengyel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

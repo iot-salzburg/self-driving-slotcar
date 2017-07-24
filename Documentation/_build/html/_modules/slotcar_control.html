@@ -1,0 +1,359 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>slotcar_control &#8212; Salzburg_Research 1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for slotcar_control</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">serial</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+
+<div class="viewcode-block" id="SlotcarClient"><a class="viewcode-back" href="../code.html#slotcar_control.SlotcarClient">[docs]</a><span class="k">class</span> <span class="nc">SlotcarClient</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The class which handles the communication with the SlotCar track (currently 6 car power base).</span>
+<span class="sd">    Protocol based on http://ssdc.jackaments.com/saved/C7042_6CarPowerBase_SNC_Protocol_v01-public.pdf .</span>
+<span class="sd">    </span>
+<span class="sd">    Attributes:</span>
+<span class="sd">        self.handsets_on:</span>
+<span class="sd">                        Which handsets are being used (not important).</span>
+<span class="sd">        self.handsets_info:</span>
+<span class="sd">                        Information about the ith handset. information in the array. index 0: brake boolean, </span>
+<span class="sd">                        index1: lane_change boolean index2: power int.</span>
+<span class="sd">        self.response:</span>
+<span class="sd">                    The response received from 6CPB.</span>
+<span class="sd">        self.aux_current:</span>
+<span class="sd">                    Indicates the auxiliary port current (in mA) consumed (not important).</span>
+<span class="sd">        self.carID:</span>
+<span class="sd">                The id of the car which passed the SF (start finish) line between the last and current received </span>
+<span class="sd">                packet from the 6CPB. If no car passed it, then 000 indicates the game timer. Otherwise, 111</span>
+<span class="sd">                indicates an invalid id.</span>
+<span class="sd">        self.received_time:</span>
+<span class="sd">                        The time we received with the current packet, decoded and converted to a valid int, after </span>
+<span class="sd">                        calling self.compute_response_time(). The time only makes sense relative to a starting </span>
+<span class="sd">                        point at which the timer started. That starting point is different for every different</span>
+<span class="sd">                        carID we can receive. More explanation with the attribute self.game_timer and </span>
+<span class="sd">                        self.car_times.</span>
+<span class="sd">        self.crc8/lookup_table:</span>
+<span class="sd">                            Needed to compute checksum for packets. Refer to manual.</span>
+<span class="sd">        self.time_increment:</span>
+<span class="sd">                        Needed to decode the time received from packet. Defined in </span>
+<span class="sd">                        protocol documentation for game timer.</span>
+<span class="sd">        self.last_packet_sent:</span>
+<span class="sd">                            The last packet we sent. Needed in case we received an invalid packet from 6CPB.</span>
+<span class="sd">        self.game_time:</span>
+<span class="sd">                    The time since we started the game. Set when we receive a packet which has as its carID</span>
+<span class="sd">                    0000 which indicates the game timer, and then setting self.received_time.</span>
+<span class="sd">        self.car_times:</span>
+<span class="sd">                    2D array where the first level detrmines the car, e.g. i=0 for car1 etc. and </span>
+<span class="sd">                    second level has form [last_lap_time, last_global_time]</span>
+<span class="sd">                    (global time is the time since when the car passed SF line for the first time). Lap_time</span>
+<span class="sd">                    is computed by subtracting the previous last_global_time with the current one.</span>
+<span class="sd">        self.checksum_tries:</span>
+<span class="sd">                        Counting the number of times we received an invalid packet. 6CPB will resend the</span>
+<span class="sd">                        packet at most 2 times.</span>
+<span class="sd">        self.track_power_status:</span>
+<span class="sd">                        Whether power is properly delivered to the tracks (boolean).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># the lookup table for the crc checksum</span>
+    <span class="n">lookup_table</span> <span class="o">=</span> <span class="p">[</span><span class="mh">0x00</span><span class="p">,</span> <span class="mh">0x07</span><span class="p">,</span> <span class="mh">0x0e</span><span class="p">,</span> <span class="mh">0x09</span><span class="p">,</span> <span class="mh">0x1c</span><span class="p">,</span> <span class="mh">0x1b</span><span class="p">,</span> <span class="mh">0x12</span><span class="p">,</span> <span class="mh">0x15</span><span class="p">,</span> <span class="mh">0x38</span><span class="p">,</span> <span class="mh">0x3f</span><span class="p">,</span> <span class="mh">0x36</span><span class="p">,</span> <span class="mh">0x31</span><span class="p">,</span> <span class="mh">0x24</span><span class="p">,</span> <span class="mh">0x23</span><span class="p">,</span> <span class="mh">0x2a</span><span class="p">,</span> <span class="mh">0x2d</span><span class="p">,</span>
+                    <span class="mh">0x70</span><span class="p">,</span> <span class="mh">0x77</span><span class="p">,</span> <span class="mh">0x7E</span><span class="p">,</span> <span class="mh">0x79</span><span class="p">,</span> <span class="mh">0x6C</span><span class="p">,</span> <span class="mh">0x6B</span><span class="p">,</span> <span class="mh">0x62</span><span class="p">,</span> <span class="mh">0x65</span><span class="p">,</span> <span class="mh">0x48</span><span class="p">,</span> <span class="mh">0x4F</span><span class="p">,</span> <span class="mh">0x46</span><span class="p">,</span> <span class="mh">0x41</span><span class="p">,</span> <span class="mh">0x54</span><span class="p">,</span> <span class="mh">0x53</span><span class="p">,</span> <span class="mh">0x5A</span><span class="p">,</span> <span class="mh">0x5D</span><span class="p">,</span>
+                    <span class="mh">0xE0</span><span class="p">,</span> <span class="mh">0xE7</span><span class="p">,</span> <span class="mh">0xEE</span><span class="p">,</span> <span class="mh">0xE9</span><span class="p">,</span> <span class="mh">0xFC</span><span class="p">,</span> <span class="mh">0xFB</span><span class="p">,</span> <span class="mh">0xF2</span><span class="p">,</span> <span class="mh">0xF5</span><span class="p">,</span> <span class="mh">0xD8</span><span class="p">,</span> <span class="mh">0xDF</span><span class="p">,</span> <span class="mh">0xD6</span><span class="p">,</span> <span class="mh">0xD1</span><span class="p">,</span> <span class="mh">0xC4</span><span class="p">,</span> <span class="mh">0xC3</span><span class="p">,</span> <span class="mh">0xCA</span><span class="p">,</span> <span class="mh">0xCD</span><span class="p">,</span>
+                    <span class="mh">0x90</span><span class="p">,</span> <span class="mh">0x97</span><span class="p">,</span> <span class="mh">0x9E</span><span class="p">,</span> <span class="mh">0x99</span><span class="p">,</span> <span class="mh">0x8C</span><span class="p">,</span> <span class="mh">0x8B</span><span class="p">,</span> <span class="mh">0x82</span><span class="p">,</span> <span class="mh">0x85</span><span class="p">,</span> <span class="mh">0xA8</span><span class="p">,</span> <span class="mh">0xAF</span><span class="p">,</span> <span class="mh">0xA6</span><span class="p">,</span> <span class="mh">0xA1</span><span class="p">,</span> <span class="mh">0xB4</span><span class="p">,</span> <span class="mh">0xB3</span><span class="p">,</span> <span class="mh">0xBA</span><span class="p">,</span> <span class="mh">0xBD</span><span class="p">,</span>
+                    <span class="mh">0xC7</span><span class="p">,</span> <span class="mh">0xC0</span><span class="p">,</span> <span class="mh">0xC9</span><span class="p">,</span> <span class="mh">0xCE</span><span class="p">,</span> <span class="mh">0xDB</span><span class="p">,</span> <span class="mh">0xDC</span><span class="p">,</span> <span class="mh">0xD5</span><span class="p">,</span> <span class="mh">0xD2</span><span class="p">,</span> <span class="mh">0xFF</span><span class="p">,</span> <span class="mh">0xF8</span><span class="p">,</span> <span class="mh">0xF1</span><span class="p">,</span> <span class="mh">0xF6</span><span class="p">,</span> <span class="mh">0xE3</span><span class="p">,</span> <span class="mh">0xE4</span><span class="p">,</span> <span class="mh">0xED</span><span class="p">,</span> <span class="mh">0xEA</span><span class="p">,</span>
+                    <span class="mh">0xB7</span><span class="p">,</span> <span class="mh">0xB0</span><span class="p">,</span> <span class="mh">0xB9</span><span class="p">,</span> <span class="mh">0xBE</span><span class="p">,</span> <span class="mh">0xAB</span><span class="p">,</span> <span class="mh">0xAC</span><span class="p">,</span> <span class="mh">0xA5</span><span class="p">,</span> <span class="mh">0xA2</span><span class="p">,</span> <span class="mh">0x8F</span><span class="p">,</span> <span class="mh">0x88</span><span class="p">,</span> <span class="mh">0x81</span><span class="p">,</span> <span class="mh">0x86</span><span class="p">,</span> <span class="mh">0x93</span><span class="p">,</span> <span class="mh">0x94</span><span class="p">,</span> <span class="mh">0x9D</span><span class="p">,</span> <span class="mh">0x9A</span><span class="p">,</span>
+                    <span class="mh">0x27</span><span class="p">,</span> <span class="mh">0x20</span><span class="p">,</span> <span class="mh">0x29</span><span class="p">,</span> <span class="mh">0x2E</span><span class="p">,</span> <span class="mh">0x3B</span><span class="p">,</span> <span class="mh">0x3C</span><span class="p">,</span> <span class="mh">0x35</span><span class="p">,</span> <span class="mh">0x32</span><span class="p">,</span> <span class="mh">0x1F</span><span class="p">,</span> <span class="mh">0x18</span><span class="p">,</span> <span class="mh">0x11</span><span class="p">,</span> <span class="mh">0x16</span><span class="p">,</span> <span class="mh">0x03</span><span class="p">,</span> <span class="mh">0x04</span><span class="p">,</span> <span class="mh">0x0D</span><span class="p">,</span> <span class="mh">0x0A</span><span class="p">,</span>
+                    <span class="mh">0x57</span><span class="p">,</span> <span class="mh">0x50</span><span class="p">,</span> <span class="mh">0x59</span><span class="p">,</span> <span class="mh">0x5E</span><span class="p">,</span> <span class="mh">0x4B</span><span class="p">,</span> <span class="mh">0x4C</span><span class="p">,</span> <span class="mh">0x45</span><span class="p">,</span> <span class="mh">0x42</span><span class="p">,</span> <span class="mh">0x6F</span><span class="p">,</span> <span class="mh">0x68</span><span class="p">,</span> <span class="mh">0x61</span><span class="p">,</span> <span class="mh">0x66</span><span class="p">,</span> <span class="mh">0x73</span><span class="p">,</span> <span class="mh">0x74</span><span class="p">,</span> <span class="mh">0x7D</span><span class="p">,</span> <span class="mh">0x7A</span><span class="p">,</span>
+                    <span class="mh">0x89</span><span class="p">,</span> <span class="mh">0x8E</span><span class="p">,</span> <span class="mh">0x87</span><span class="p">,</span> <span class="mh">0x80</span><span class="p">,</span> <span class="mh">0x95</span><span class="p">,</span> <span class="mh">0x92</span><span class="p">,</span> <span class="mh">0x9B</span><span class="p">,</span> <span class="mh">0x9C</span><span class="p">,</span> <span class="mh">0xB1</span><span class="p">,</span> <span class="mh">0xB6</span><span class="p">,</span> <span class="mh">0xBF</span><span class="p">,</span> <span class="mh">0xB8</span><span class="p">,</span> <span class="mh">0xAD</span><span class="p">,</span> <span class="mh">0xAA</span><span class="p">,</span> <span class="mh">0xA3</span><span class="p">,</span> <span class="mh">0xA4</span><span class="p">,</span>
+                    <span class="mh">0xF9</span><span class="p">,</span> <span class="mh">0xFE</span><span class="p">,</span> <span class="mh">0xF7</span><span class="p">,</span> <span class="mh">0xF0</span><span class="p">,</span> <span class="mh">0xE5</span><span class="p">,</span> <span class="mh">0xE2</span><span class="p">,</span> <span class="mh">0xEB</span><span class="p">,</span> <span class="mh">0xEC</span><span class="p">,</span> <span class="mh">0xC1</span><span class="p">,</span> <span class="mh">0xC6</span><span class="p">,</span> <span class="mh">0xCF</span><span class="p">,</span> <span class="mh">0xC8</span><span class="p">,</span> <span class="mh">0xDD</span><span class="p">,</span> <span class="mh">0xDA</span><span class="p">,</span> <span class="mh">0xD3</span><span class="p">,</span> <span class="mh">0xD4</span><span class="p">,</span>
+                    <span class="mh">0x69</span><span class="p">,</span> <span class="mh">0x6E</span><span class="p">,</span> <span class="mh">0x67</span><span class="p">,</span> <span class="mh">0x60</span><span class="p">,</span> <span class="mh">0x75</span><span class="p">,</span> <span class="mh">0x72</span><span class="p">,</span> <span class="mh">0x7B</span><span class="p">,</span> <span class="mh">0x7C</span><span class="p">,</span> <span class="mh">0x51</span><span class="p">,</span> <span class="mh">0x56</span><span class="p">,</span> <span class="mh">0x5F</span><span class="p">,</span> <span class="mh">0x58</span><span class="p">,</span> <span class="mh">0x4D</span><span class="p">,</span> <span class="mh">0x4A</span><span class="p">,</span> <span class="mh">0x43</span><span class="p">,</span> <span class="mh">0x44</span><span class="p">,</span>
+                    <span class="mh">0x19</span><span class="p">,</span> <span class="mh">0x1E</span><span class="p">,</span> <span class="mh">0x17</span><span class="p">,</span> <span class="mh">0x10</span><span class="p">,</span> <span class="mh">0x05</span><span class="p">,</span> <span class="mh">0x02</span><span class="p">,</span> <span class="mh">0x0B</span><span class="p">,</span> <span class="mh">0x0C</span><span class="p">,</span> <span class="mh">0x21</span><span class="p">,</span> <span class="mh">0x26</span><span class="p">,</span> <span class="mh">0x2F</span><span class="p">,</span> <span class="mh">0x28</span><span class="p">,</span> <span class="mh">0x3D</span><span class="p">,</span> <span class="mh">0x3A</span><span class="p">,</span> <span class="mh">0x33</span><span class="p">,</span> <span class="mh">0x34</span><span class="p">,</span>
+                    <span class="mh">0x4E</span><span class="p">,</span> <span class="mh">0x49</span><span class="p">,</span> <span class="mh">0x40</span><span class="p">,</span> <span class="mh">0x47</span><span class="p">,</span> <span class="mh">0x52</span><span class="p">,</span> <span class="mh">0x55</span><span class="p">,</span> <span class="mh">0x5C</span><span class="p">,</span> <span class="mh">0x5B</span><span class="p">,</span> <span class="mh">0x76</span><span class="p">,</span> <span class="mh">0x71</span><span class="p">,</span> <span class="mh">0x78</span><span class="p">,</span> <span class="mh">0x7F</span><span class="p">,</span> <span class="mh">0x6A</span><span class="p">,</span> <span class="mh">0x6D</span><span class="p">,</span> <span class="mh">0x64</span><span class="p">,</span> <span class="mh">0x63</span><span class="p">,</span>
+                    <span class="mh">0x3E</span><span class="p">,</span> <span class="mh">0x39</span><span class="p">,</span> <span class="mh">0x30</span><span class="p">,</span> <span class="mh">0x37</span><span class="p">,</span> <span class="mh">0x22</span><span class="p">,</span> <span class="mh">0x25</span><span class="p">,</span> <span class="mh">0x2C</span><span class="p">,</span> <span class="mh">0x2B</span><span class="p">,</span> <span class="mh">0x06</span><span class="p">,</span> <span class="mh">0x01</span><span class="p">,</span> <span class="mh">0x08</span><span class="p">,</span> <span class="mh">0x0F</span><span class="p">,</span> <span class="mh">0x1A</span><span class="p">,</span> <span class="mh">0x1D</span><span class="p">,</span> <span class="mh">0x14</span><span class="p">,</span> <span class="mh">0x13</span><span class="p">,</span>
+                    <span class="mh">0xAE</span><span class="p">,</span> <span class="mh">0xA9</span><span class="p">,</span> <span class="mh">0xA0</span><span class="p">,</span> <span class="mh">0xA7</span><span class="p">,</span> <span class="mh">0xB2</span><span class="p">,</span> <span class="mh">0xB5</span><span class="p">,</span> <span class="mh">0xBC</span><span class="p">,</span> <span class="mh">0xBB</span><span class="p">,</span> <span class="mh">0x96</span><span class="p">,</span> <span class="mh">0x91</span><span class="p">,</span> <span class="mh">0x98</span><span class="p">,</span> <span class="mh">0x9F</span><span class="p">,</span> <span class="mh">0x8A</span><span class="p">,</span> <span class="mh">0x8D</span><span class="p">,</span> <span class="mh">0x84</span><span class="p">,</span> <span class="mh">0x83</span><span class="p">,</span>
+                    <span class="mh">0xDE</span><span class="p">,</span> <span class="mh">0xD9</span><span class="p">,</span> <span class="mh">0xD0</span><span class="p">,</span> <span class="mh">0xD7</span><span class="p">,</span> <span class="mh">0xC2</span><span class="p">,</span> <span class="mh">0xC5</span><span class="p">,</span> <span class="mh">0xCC</span><span class="p">,</span> <span class="mh">0xCB</span><span class="p">,</span> <span class="mh">0xE6</span><span class="p">,</span> <span class="mh">0xE1</span><span class="p">,</span> <span class="mh">0xE8</span><span class="p">,</span> <span class="mh">0xEF</span><span class="p">,</span> <span class="mh">0xFA</span><span class="p">,</span> <span class="mh">0xFD</span><span class="p">,</span> <span class="mh">0xF4</span><span class="p">,</span> <span class="mh">0xF3</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># set the serial. check for which port. In the raspberry put it in the top slot. TODO</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span> <span class="o">=</span> <span class="n">serial</span><span class="o">.</span><span class="n">Serial</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="s1">&#39;/dev/ttyUSB0&#39;</span><span class="p">,</span> <span class="n">baudrate</span><span class="o">=</span><span class="mi">19200</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handsets_on</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>  <span class="c1"># if the connection to the ith handset is established</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handsets_info</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aux_current</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">carID</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">received_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">crc8</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timer_increment</span> <span class="o">=</span> <span class="mf">6.4</span> <span class="o">/</span> <span class="nb">pow</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>  <span class="c1"># defined in protocol documentation for game timer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_packet_sent</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">game_timer</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">car_times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">6</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                  <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>  <span class="c1"># 2D array where the first level detrmines the car i=0 for car1 etc. and second level has form [last_lap_time, last_global_time] (global time is the time since when the car passed SF line for the first time)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checksum_tries</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">track_power_status</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+<div class="viewcode-block" id="SlotcarClient.write_packet"><a class="viewcode-back" href="../code.html#slotcar_control.SlotcarClient.write_packet">[docs]</a>    <span class="k">def</span> <span class="nf">write_packet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">as_is</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sucIndicator</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">firstCar</span><span class="o">=</span><span class="mh">0xFF</span><span class="p">,</span> <span class="n">secondCar</span><span class="o">=</span><span class="mh">0xFF</span><span class="p">,</span>
+                     <span class="n">thirdCar</span><span class="o">=</span><span class="mh">0xFF</span><span class="p">,</span> <span class="n">fourthCar</span><span class="o">=</span><span class="mh">0xFF</span><span class="p">,</span> <span class="n">fifthCar</span><span class="o">=</span><span class="mh">0xFF</span><span class="p">,</span> <span class="n">sixthCar</span><span class="o">=</span><span class="mh">0xFF</span><span class="p">,</span>
+                     <span class="n">ledByte</span><span class="o">=</span><span class="mh">0x00</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        writes 9bytes</span>
+<span class="sd">        sucIndicator = boolean whether we received previous packet successfully</span>
+<span class="sd">        start = boolean whether we are starting transmission</span>
+<span class="sd">        firstCar, secondCar,..., = the byte to send for the given car</span>
+<span class="sd">        ledByte is the byte to send for the led control</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">as_is</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pre_output</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">sucIndicator</span><span class="p">:</span>
+                <span class="n">pre_output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mh">0xFF</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pre_output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mh">0x7F</span><span class="p">)</span>
+            <span class="n">cars</span> <span class="o">=</span> <span class="p">[</span><span class="n">firstCar</span><span class="p">,</span> <span class="n">secondCar</span><span class="p">,</span> <span class="n">thirdCar</span><span class="p">,</span> <span class="n">fourthCar</span><span class="p">,</span> <span class="n">fifthCar</span><span class="p">,</span> <span class="n">sixthCar</span><span class="p">]</span>
+            <span class="n">pre_output</span> <span class="o">=</span> <span class="n">pre_output</span> <span class="o">+</span> <span class="n">cars</span>
+            <span class="n">pre_output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ledByte</span><span class="p">)</span>
+            <span class="n">pre_output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checksum_calc</span><span class="p">(</span><span class="n">pre_output</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_packet_sent</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="n">pre_output</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_packet_sent</span> <span class="o">=</span> <span class="n">as_is</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_packet_sent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>  <span class="c1"># manual says that there are 14 bytes. I tried it and there seems to be an</span></div>
+        <span class="c1"># an extra byte after the 9th byte.</span>
+
+<div class="viewcode-block" id="SlotcarClient.read_packet"><a class="viewcode-back" href="../code.html#slotcar_control.SlotcarClient.read_packet">[docs]</a>    <span class="k">def</span> <span class="nf">read_packet</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reads the packet we received according to the protocol. Sets all relevant attributes in the proccess.&quot;&quot;&quot;</span>
+        <span class="c1"># The following part seems to give errors at times, because we are working with 15 bytes instead of 14</span>
+        <span class="c1"># and the 6CPB seems to be working inconsistently at times.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="mi">14</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">checksum_calc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">checksum_tries</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">checksum_tries</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">return</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">checksum_tries</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">write_packet</span><span class="p">(</span><span class="nb">bytearray</span><span class="p">([</span><span class="mh">0x7F</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last_packet_sent</span><span class="p">[</span><span class="mi">1</span><span class="p">:])))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">read_packet</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">track_power_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bits</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># get the last bit. boolean</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_handsets_on</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_handsets_info</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">aux_current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">carID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bits</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># 000 is game timer and 111 is invalid ID</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">received_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_response_time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_all_times</span><span class="p">(</span><span class="n">print_update</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+    <span class="c1"># -----------------------------</span>
+    <span class="c1"># helper functions</span>
+
+<div class="viewcode-block" id="SlotcarClient.car_byte"><a class="viewcode-back" href="../code.html#slotcar_control.SlotcarClient.car_byte">[docs]</a>    <span class="k">def</span> <span class="nf">car_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">brake</span><span class="p">,</span> <span class="n">laneChange</span><span class="p">,</span> <span class="n">power</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a byte which gives instruction to the car when using write_packet</span>
+<span class="sd">           brake boolean</span>
+<span class="sd">           laneChange boolean</span>
+<span class="sd">           power int [0-63]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pre_output</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">brake</span><span class="p">:</span>
+            <span class="n">pre_output</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pre_output</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">laneChange</span><span class="p">:</span>
+            <span class="n">pre_output</span> <span class="o">=</span> <span class="p">(</span><span class="n">pre_output</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pre_output</span> <span class="o">=</span> <span class="p">(</span><span class="n">pre_output</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span><span class="p">)</span> <span class="o">|</span> <span class="mi">0</span>
+        <span class="n">pre_output</span> <span class="o">=</span> <span class="p">(</span><span class="n">pre_output</span> <span class="o">&lt;&lt;</span> <span class="mi">6</span><span class="p">)</span> <span class="o">|</span> <span class="n">power</span>
+        <span class="k">return</span> <span class="n">pre_output</span> <span class="o">^</span> <span class="mh">0xFF</span></div>
+
+<div class="viewcode-block" id="SlotcarClient.led_byte"><a class="viewcode-back" href="../code.html#slotcar_control.SlotcarClient.led_byte">[docs]</a>    <span class="k">def</span> <span class="nf">led_byte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">greenLed</span><span class="p">,</span> <span class="n">redLed</span><span class="p">,</span> <span class="n">led6</span><span class="p">,</span> <span class="n">led5</span><span class="p">,</span> <span class="n">led4</span><span class="p">,</span> <span class="n">led3</span><span class="p">,</span> <span class="n">led2</span><span class="p">,</span> <span class="n">led1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the led_byte to be used in a write_packet.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">greenLed</span> <span class="o">&lt;&lt;</span> <span class="mi">7</span> <span class="o">|</span> <span class="n">redLed</span> <span class="o">&lt;&lt;</span> <span class="mi">6</span> <span class="o">|</span> <span class="n">led6</span> <span class="o">&lt;&lt;</span> <span class="mi">5</span> <span class="o">|</span> <span class="n">led5</span> <span class="o">&lt;&lt;</span> <span class="mi">4</span> <span class="o">|</span> <span class="n">led4</span> <span class="o">&lt;&lt;</span> <span class="mi">3</span> <span class="o">|</span> <span class="n">led3</span> <span class="o">&lt;&lt;</span> <span class="mi">2</span> <span class="o">|</span> <span class="n">led2</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span> <span class="o">|</span> <span class="n">led1</span></div>
+
+<div class="viewcode-block" id="SlotcarClient.checksum_calc"><a class="viewcode-back" href="../code.html#slotcar_control.SlotcarClient.checksum_calc">[docs]</a>    <span class="k">def</span> <span class="nf">checksum_calc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">packet</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculates the checksum for the packet to be sent, as seen in the</span>
+<span class="sd">            Protocol.</span>
+<span class="sd">            Input is an array of the packet bytes to be used.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">crc8</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup_table</span><span class="p">[</span><span class="n">packet</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">packet</span><span class="p">)</span> <span class="o">==</span> <span class="mi">8</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">8</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">crc8</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup_table</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">crc8</span> <span class="o">^</span> <span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">14</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">crc8</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup_table</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">crc8</span> <span class="o">^</span> <span class="n">packet</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">crc8</span></div>
+
+<div class="viewcode-block" id="SlotcarClient.set_all_times"><a class="viewcode-back" href="../code.html#slotcar_control.SlotcarClient.set_all_times">[docs]</a>    <span class="k">def</span> <span class="nf">set_all_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">print_update</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set all the relevant times and computes the lap times for the cars.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">carID</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">game_timer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">received_time</span>
+            <span class="k">return</span>
+        <span class="c1"># invalid carID. just ignore for now</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">carID</span> <span class="o">==</span> <span class="mb">0b111</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">car_times</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">carID</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">received_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">car_times</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">carID</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span>
+                                              <span class="bp">self</span><span class="o">.</span><span class="n">received_time</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">print_update</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Last lap time for car &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">carID</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">car_times</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">carID</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]))</span></div>
+
+<div class="viewcode-block" id="SlotcarClient.compute_response_time"><a class="viewcode-back" href="../code.html#slotcar_control.SlotcarClient.compute_response_time">[docs]</a>    <span class="k">def</span> <span class="nf">compute_response_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bytes_times</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Computes the real time from the encoded byte time as given by the last response.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">bytes_times</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bytes_times</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">)[</span><span class="mi">9</span><span class="p">:</span><span class="mi">13</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">temp_time</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">bytes_times</span><span class="p">:</span>
+            <span class="n">temp_time</span> <span class="o">=</span> <span class="p">(</span><span class="n">temp_time</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="n">elem</span>
+        <span class="n">temp_time</span> <span class="o">=</span> <span class="n">temp_time</span> <span class="k">if</span> <span class="n">temp_time</span> <span class="o">!=</span> <span class="mh">0xFFFFFFFF</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">temp_time</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">timer_increment</span></div>
+
+<div class="viewcode-block" id="SlotcarClient.get_bits"><a class="viewcode-back" href="../code.html#slotcar_control.SlotcarClient.get_bits">[docs]</a>    <span class="k">def</span> <span class="nf">get_bits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bitstring</span><span class="p">,</span> <span class="n">start_pos</span><span class="p">,</span> <span class="n">end_pos</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Given the bitstring, get the bits starting at start_pos to end_pos.</span>
+<span class="sd">           The least significant bit has index 0. end_position inclusive. Start_pos &gt; end_pos.</span>
+<span class="sd">           If no end_pos given, then assume end position is the LSB.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">end_pos</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">bitstring</span> <span class="o">&amp;</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">start_pos</span><span class="p">))</span> <span class="o">&gt;&gt;</span> <span class="n">start_pos</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="mh">0xFFFF</span> <span class="o">^</span> <span class="p">(</span><span class="mh">0xFFFF</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">start_pos</span> <span class="o">-</span> <span class="n">end_pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)))</span> <span class="o">&amp;</span> <span class="mh">0xFFFF</span>  <span class="c1"># this is ridiculous</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">bitstring</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">mask</span> <span class="o">&lt;&lt;</span> <span class="n">end_pos</span><span class="p">))</span> <span class="o">&gt;&gt;</span> <span class="n">end_pos</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">handsets_on</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handsets_on</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bits</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">handsets_on</span>
+
+    <span class="nd">@handsets_on</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">handsets_on</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handsets_on</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">handsets_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handsets_info</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_bits</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">7</span><span class="p">),</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">get_bits</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">6</span><span class="p">),</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">get_bits</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">handsets_info</span>
+
+    <span class="nd">@handsets_info</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">handsets_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handsets_info</span> <span class="o">=</span> <span class="n">value</span></div>
+
+
+<span class="c1"># tests the class</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">worker</span> <span class="o">=</span> <span class="n">SlotcarClient</span><span class="p">()</span>
+    <span class="n">do</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">worker</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">flushOutput</span><span class="p">()</span>
+    <span class="n">worker</span><span class="o">.</span><span class="n">ser</span><span class="o">.</span><span class="n">flushInput</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">do</span><span class="p">:</span>
+        <span class="n">worker</span><span class="o">.</span><span class="n">write_packet</span><span class="p">(</span><span class="n">sucIndicator</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">secondCar</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">car_byte</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+                            <span class="n">ledByte</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">led_byte</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">worker</span><span class="o">.</span><span class="n">response</span><span class="p">[</span><span class="mi">13</span><span class="p">])</span>
+        <span class="n">worker</span><span class="o">.</span><span class="n">read_packet</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">do</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+
+        <span class="n">started</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">time_last_lap</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">started</span><span class="p">:</span>
+                <span class="n">worker</span><span class="o">.</span><span class="n">write_packet</span><span class="p">(</span><span class="n">sucIndicator</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ledByte</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">led_byte</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                <span class="n">worker</span><span class="o">.</span><span class="n">write_packet</span><span class="p">(</span><span class="n">sucIndicator</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">firstCar</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">car_byte</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span>
+                                    <span class="n">secondCar</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">car_byte</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span>
+                                    <span class="n">ledByte</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">led_byte</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+                <span class="n">started</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="n">worker</span><span class="o">.</span><span class="n">write_packet</span><span class="p">(</span><span class="n">sucIndicator</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">firstCar</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">car_byte</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span>
+                                <span class="n">secondCar</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">car_byte</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">13</span><span class="p">),</span> <span class="n">ledByte</span><span class="o">=</span><span class="n">worker</span><span class="o">.</span><span class="n">led_byte</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">worker</span><span class="o">.</span><span class="n">read_packet</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">Salzburg_Research</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../code.html">Code Documentation</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Daniel Lengyel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

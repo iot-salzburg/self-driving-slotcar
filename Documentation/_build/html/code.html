@@ -1,0 +1,341 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Code Documentation &#8212; Salzburg_Research 1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to Salzburg_Research’s documentation!" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-slotcar_control">
+<span id="code-documentation"></span><h1>Code Documentation<a class="headerlink" href="#module-slotcar_control" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="slotcar_control.SlotcarClient">
+<em class="property">class </em><code class="descclassname">slotcar_control.</code><code class="descname">SlotcarClient</code><a class="reference internal" href="_modules/slotcar_control.html#SlotcarClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#slotcar_control.SlotcarClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>The class which handles the communication with the SlotCar track (currently 6 car power base).
+Protocol based on <a class="reference external" href="http://ssdc.jackaments.com/saved/C7042_6CarPowerBase_SNC_Protocol_v01-public.pdf">http://ssdc.jackaments.com/saved/C7042_6CarPowerBase_SNC_Protocol_v01-public.pdf</a> .</p>
+<dl class="docutils">
+<dt>Attributes:</dt>
+<dd><dl class="first last docutils">
+<dt>self.handsets_on:</dt>
+<dd>Which handsets are being used (not important).</dd>
+<dt>self.handsets_info:</dt>
+<dd>Information about the ith handset. information in the array. index 0: brake boolean, 
+index1: lane_change boolean index2: power int.</dd>
+<dt>self.response:</dt>
+<dd>The response received from 6CPB.</dd>
+<dt>self.aux_current:</dt>
+<dd>Indicates the auxiliary port current (in mA) consumed (not important).</dd>
+<dt>self.carID:</dt>
+<dd>The id of the car which passed the SF (start finish) line between the last and current received 
+packet from the 6CPB. If no car passed it, then 000 indicates the game timer. Otherwise, 111
+indicates an invalid id.</dd>
+<dt>self.received_time:</dt>
+<dd>The time we received with the current packet, decoded and converted to a valid int, after 
+calling self.compute_response_time(). The time only makes sense relative to a starting 
+point at which the timer started. That starting point is different for every different
+carID we can receive. More explanation with the attribute self.game_timer and 
+self.car_times.</dd>
+<dt>self.crc8/lookup_table:</dt>
+<dd>Needed to compute checksum for packets. Refer to manual.</dd>
+<dt>self.time_increment:</dt>
+<dd>Needed to decode the time received from packet. Defined in 
+protocol documentation for game timer.</dd>
+<dt>self.last_packet_sent:</dt>
+<dd>The last packet we sent. Needed in case we received an invalid packet from 6CPB.</dd>
+<dt>self.game_time:</dt>
+<dd>The time since we started the game. Set when we receive a packet which has as its carID
+0000 which indicates the game timer, and then setting self.received_time.</dd>
+<dt>self.car_times:</dt>
+<dd>2D array where the first level detrmines the car, e.g. i=0 for car1 etc. and 
+second level has form [last_lap_time, last_global_time]
+(global time is the time since when the car passed SF line for the first time). Lap_time
+is computed by subtracting the previous last_global_time with the current one.</dd>
+<dt>self.checksum_tries:</dt>
+<dd>Counting the number of times we received an invalid packet. 6CPB will resend the
+packet at most 2 times.</dd>
+<dt>self.track_power_status:</dt>
+<dd>Whether power is properly delivered to the tracks (boolean).</dd>
+</dl>
+</dd>
+</dl>
+<dl class="method">
+<dt id="slotcar_control.SlotcarClient.car_byte">
+<code class="descname">car_byte</code><span class="sig-paren">(</span><em>brake</em>, <em>laneChange</em>, <em>power</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/slotcar_control.html#SlotcarClient.car_byte"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#slotcar_control.SlotcarClient.car_byte" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Returns a byte which gives instruction to the car when using write_packet</dt>
+<dd>brake boolean
+laneChange boolean
+power int [0-63]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="slotcar_control.SlotcarClient.checksum_calc">
+<code class="descname">checksum_calc</code><span class="sig-paren">(</span><em>packet</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/slotcar_control.html#SlotcarClient.checksum_calc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#slotcar_control.SlotcarClient.checksum_calc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates the checksum for the packet to be sent, as seen in the
+Protocol.
+Input is an array of the packet bytes to be used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="slotcar_control.SlotcarClient.compute_response_time">
+<code class="descname">compute_response_time</code><span class="sig-paren">(</span><em>bytes_times=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/slotcar_control.html#SlotcarClient.compute_response_time"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#slotcar_control.SlotcarClient.compute_response_time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the real time from the encoded byte time as given by the last response.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="slotcar_control.SlotcarClient.get_bits">
+<code class="descname">get_bits</code><span class="sig-paren">(</span><em>bitstring</em>, <em>start_pos</em>, <em>end_pos=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/slotcar_control.html#SlotcarClient.get_bits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#slotcar_control.SlotcarClient.get_bits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given the bitstring, get the bits starting at start_pos to end_pos.
+The least significant bit has index 0. end_position inclusive. Start_pos &gt; end_pos.
+If no end_pos given, then assume end position is the LSB.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="slotcar_control.SlotcarClient.led_byte">
+<code class="descname">led_byte</code><span class="sig-paren">(</span><em>greenLed</em>, <em>redLed</em>, <em>led6</em>, <em>led5</em>, <em>led4</em>, <em>led3</em>, <em>led2</em>, <em>led1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/slotcar_control.html#SlotcarClient.led_byte"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#slotcar_control.SlotcarClient.led_byte" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the led_byte to be used in a write_packet.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="slotcar_control.SlotcarClient.read_packet">
+<code class="descname">read_packet</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/slotcar_control.html#SlotcarClient.read_packet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#slotcar_control.SlotcarClient.read_packet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the packet we received according to the protocol. Sets all relevant attributes in the proccess.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="slotcar_control.SlotcarClient.set_all_times">
+<code class="descname">set_all_times</code><span class="sig-paren">(</span><em>print_update=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/slotcar_control.html#SlotcarClient.set_all_times"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#slotcar_control.SlotcarClient.set_all_times" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set all the relevant times and computes the lap times for the cars.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="slotcar_control.SlotcarClient.write_packet">
+<code class="descname">write_packet</code><span class="sig-paren">(</span><em>as_is=None</em>, <em>sucIndicator=True</em>, <em>start=False</em>, <em>firstCar=255</em>, <em>secondCar=255</em>, <em>thirdCar=255</em>, <em>fourthCar=255</em>, <em>fifthCar=255</em>, <em>sixthCar=255</em>, <em>ledByte=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/slotcar_control.html#SlotcarClient.write_packet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#slotcar_control.SlotcarClient.write_packet" title="Permalink to this definition">¶</a></dt>
+<dd><p>writes 9bytes
+sucIndicator = boolean whether we received previous packet successfully
+start = boolean whether we are starting transmission
+firstCar, secondCar,…, = the byte to send for the given car
+ledByte is the byte to send for the led control</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-simple_ai_algorithm"></span><span class="target" id="module-AI_Base"></span><dl class="class">
+<dt id="AI_Base.BaseAI">
+<em class="property">class </em><code class="descclassname">AI_Base.</code><code class="descname">BaseAI</code><span class="sig-paren">(</span><em>carID=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/AI_Base.html#BaseAI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AI_Base.BaseAI" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class should be the parent class of all other algorithms. 
+It provides the standard way of accessing the data and initializing all other classes that are needed.
+Extend this class if you want to extend functionality of the hardware components, so that the algorithm classes
+will not need to be changed. 
+Attributes:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>self.slotcar_client:</dt>
+<dd>Field to communicate with the slotcar</dd>
+<dt>self.carID:</dt>
+<dd>The carID of the car we are working with. Needed for slotcar Control.</dd>
+<dt>self.gravity:</dt>
+<dd>The gravity range settings of the MPU.</dd>
+<dt>self.gyro:</dt>
+<dd>The gyro range settings of the MPU.</dd>
+<dt>self.index_data:</dt>
+<dd>A mapping of the names AcX, AcY, AcZ, GyroX, GyroY, GyroZ, Time to the index in the 
+numpy array self.data on the second level.</dd>
+<dt>self.data:</dt>
+<dd>The sensor data which is received from the ESP client. A 2D array where the second level 
+stores the actual data in an array for which the index mappings are provided by self.index_data.
+The higher the index, the newer the data. The time field is the time relative to the last time
+reset was pressed on the ESP.</dd>
+<dt>self.__esp_data:</dt>
+<dd>A queue from Multiprocessing to get the data from the ESP client.</dd>
+<dt>self.__init_queue:</dt>
+<dd>A queue from Multiprocessing to get all other relevant data from the ESP client
+to initialize the class.</dd>
+<dt>self.__esp_client:</dt>
+<dd>The esp_client.</dd>
+</dl>
+</div></blockquote>
+<dl class="attribute">
+<dt id="AI_Base.BaseAI.data">
+<code class="descname">data</code><a class="headerlink" href="#AI_Base.BaseAI.data" title="Permalink to this definition">¶</a></dt>
+<dd><p>I am the data property. Store all sensor data received from esp.
+Each time you access me, I will update myself to all the new data received from the esp_client.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="AI_Base.BaseAI.init_from_queue">
+<code class="descname">init_from_queue</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/AI_Base.html#BaseAI.init_from_queue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AI_Base.BaseAI.init_from_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes all the variables by getting the information from the ESP_Client.
+This is the current order in which the items are put in.
+When called, it will wait until it gets the initialization data.
+If we already initialized, return (could also raise exception).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="AI_Base.BaseAI.start_esp">
+<code class="descname">start_esp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/AI_Base.html#BaseAI.start_esp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#AI_Base.BaseAI.start_esp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts the communication with the ESP client. Should be called before AI starts in order
+to start the data transfer.
+Also sets all needed attributes.</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-esp_connection"></span><dl class="class">
+<dt id="esp_connection.EspClient">
+<em class="property">class </em><code class="descclassname">esp_connection.</code><code class="descname">EspClient</code><span class="sig-paren">(</span><em>server_ip='192.168.48.188'</em>, <em>port=1883</em>, <em>debugging=False</em>, <em>raw_data=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esp_connection.html#EspClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esp_connection.EspClient" title="Permalink to this definition">¶</a></dt>
+<dd><p>The class which handles the communication with the ESP device.
+Relevant attributes:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>self.server_ip:</dt>
+<dd>The ip address of the mqtt host. In the current case, we are using a Raspberry pi, which 
+has to be connected over sensornet.</dd>
+<dt>self.port:</dt>
+<dd>The port for mqtt services. Standard is 1883.</dd>
+<dt>self.debugging:</dt>
+<dd>Whether to print certain statements and print all the data which is received.</dd>
+<dt>self.raw_data:</dt>
+<dd>Should the data be put in the queue for the algorithm without being normalized and offset.</dd>
+<dt>self.num_cal:</dt>
+<dd>How many data points should be used to calibrate (can be modified if wanted).</dd>
+<dt>self.data:</dt>
+<dd>Is the queue which we receive from the baseAI class through which we can communicate the data we 
+receive.</dd>
+<dt>self.gravity:</dt>
+<dd>The gravity range setting of the MPU. We get +/-self.gravity m/s^2 values.</dd>
+<dt>self.gyro:</dt>
+<dd>The gyroscope range setting of the MPU. We get +/-self.gyro degrees/second.</dd>
+<dt>self.index_data:</dt>
+<dd>A mapping of names  “Time”, “GyroX”, “GyroY”, “GyroZ”, “AcX”, “AcY”, “AcZ” to indexes in the 
+self.data array (2nd level).</dd>
+<dt>self.norm_const:</dt>
+<dd>The normalization constants for calculating the adjusted data values received from the esp.
+e.g. AcX_data has to be transformed to (AcX_data - offset) * norm_const = 
+(AcX_data - offset)/self.range_pos * self. gravity.</dd>
+<dt>self.init_queue:</dt>
+<dd>The multiprocessing queue through which all
+relevant data which is not sensor data will be transmitted. The first item will tell
+how many elements to expect.</dd>
+</dl>
+</div></blockquote>
+<dl class="method">
+<dt id="esp_connection.EspClient.on_connect">
+<code class="descname">on_connect</code><span class="sig-paren">(</span><em>client</em>, <em>userdata</em>, <em>flags</em>, <em>rc</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esp_connection.html#EspClient.on_connect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esp_connection.EspClient.on_connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>subscription will always be automatically renewed here. even
+by connection failure</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="esp_connection.EspClient.on_message">
+<code class="descname">on_message</code><span class="sig-paren">(</span><em>client</em>, <em>userdata</em>, <em>msg</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esp_connection.html#EspClient.on_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esp_connection.EspClient.on_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Will be called when we receive a message. 
+This method calibrates, transforms and stores the data accoridingly.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="esp_connection.EspClient.start_esp">
+<code class="descname">start_esp</code><span class="sig-paren">(</span><em>data_queue</em>, <em>init_queue</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/esp_connection.html#EspClient.start_esp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#esp_connection.EspClient.start_esp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call this method to start the communication with the ESP device. Also, provide a 
+multiprocessing queue through which the esp can communicate its data.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Salzburg_Research</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Code Documentation</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to Salzburg_Research’s documentation!</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Daniel Lengyel.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/code.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
