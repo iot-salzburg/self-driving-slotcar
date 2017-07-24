@@ -3,7 +3,53 @@ import numpy as np
 import time
 
 
-class SlotcarClient():
+class SlotcarClient:
+    """
+    The class which handles the communication with the SlotCar track (currently 6 car power base).
+    Protocol based on http://ssdc.jackaments.com/saved/C7042_6CarPowerBase_SNC_Protocol_v01-public.pdf .
+    
+    Attributes:
+        self.handsets_on:
+                        Which handsets are being used (not important).
+        self.handsets_info:
+                        Information about the ith handset. information in the array. index 0: brake boolean, 
+                        index1: lane_change boolean index2: power int.
+        self.response:
+                    The response received from 6CPB.
+        self.aux_current:
+                    Indicates the auxiliary port current (in mA) consumed (not important).
+        self.carID:
+                The id of the car which passed the SF (start finish) line between the last and current received 
+                packet from the 6CPB. If no car passed it, then 000 indicates the game timer. Otherwise, 111
+                indicates an invalid id.
+        self.received_time:
+                        The time we received with the current packet, decoded and converted to a valid int, after 
+                        calling self.compute_response_time(). The time only makes sense relative to a starting 
+                        point at which the timer started. That starting point is different for every different
+                        carID we can receive. More explanation with the attribute self.game_timer and 
+                        self.car_times.
+        self.crc8/lookup_table:
+                            Needed to compute checksum for packets. Refer to manual.
+        self.time_increment:
+                        Needed to decode the time received from packet. Defined in 
+                        protocol documentation for game timer.
+        self.last_packet_sent:
+                            The last packet we sent. Needed in case we received an invalid packet from 6CPB.
+        self.game_time:
+                    The time since we started the game. Set when we receive a packet which has as its carID
+                    0000 which indicates the game timer, and then setting self.received_time.
+        self.car_times:
+                    2D array where the first level detrmines the car, e.g. i=0 for car1 etc. and 
+                    second level has form [last_lap_time, last_global_time]
+                    (global time is the time since when the car passed SF line for the first time). Lap_time
+                    is computed by subtracting the previous last_global_time with the current one.
+        self.checksum_tries:
+                        Counting the number of times we received an invalid packet. 6CPB will resend the
+                        packet at most 2 times.
+        self.track_power_status:
+                        Whether power is properly delivered to the tracks (boolean).
+    """
+
     # the lookup table for the crc checksum
     lookup_table = [0x00, 0x07, 0x0e, 0x09, 0x1c, 0x1b, 0x12, 0x15, 0x38, 0x3f, 0x36, 0x31, 0x24, 0x23, 0x2a, 0x2d,
                     0x70, 0x77, 0x7E, 0x79, 0x6C, 0x6B, 0x62, 0x65, 0x48, 0x4F, 0x46, 0x41, 0x54, 0x53, 0x5A, 0x5D,
@@ -26,11 +72,10 @@ class SlotcarClient():
         # set the serial. check for which port. In the raspberry put it in the top slot. TODO
         self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate=19200)
         self.handsets_on = [0, 0, 0, 0, 0, 0]  # if the connection to the ith handset is established
-        self.handsets_info = [[0], [0], [0], [0], [0], [
-            0]]  # information about the ith handset. information in the array. index 0: brake boolean, index1: lane_change boolean index2: power int
+        self.handsets_info = [[0], [0], [0], [0], [0], [0]]
         self.response = None
         self.aux_current = None
-        self.carID = None  # 000 is game timer and 111 is invalid ID
+        self.carID = None
         self.received_time = None
         self.crc8 = None
         self.timer_increment = 6.4 / pow(10, 6)  # defined in protocol documentation for game timer
@@ -39,16 +84,18 @@ class SlotcarClient():
         self.car_times = np.zeros((6, 2),
                                   dtype=np.float)  # 2D array where the first level detrmines the car i=0 for car1 etc. and second level has form [last_lap_time, last_global_time] (global time is the time since when the car passed SF line for the first time)
         self.checksum_tries = 0
-        self.packets_read = 0
+        self.track_power_status = -1
 
-    # writes 9bytes
-    # sucIndicator = boolean wether we received previous packet sucessfully
-    # start = boolean wether we are starting transmission
-    # firstCar, secondCar,..., = the byte to send for the given car
-    # ledByte is the byte to send for the led control
     def write_packet(self, as_is=None, sucIndicator=True, start=False, firstCar=0xFF, secondCar=0xFF,
                      thirdCar=0xFF, fourthCar=0xFF, fifthCar=0xFF, sixthCar=0xFF,
                      ledByte=0x00):
+        """
+        writes 9bytes
+        sucIndicator = boolean whether we received previous packet successfully
+        start = boolean whether we are starting transmission
+        firstCar, secondCar,..., = the byte to send for the given car
+        ledByte is the byte to send for the led control
+        """
         if as_is is None:
             pre_output = []
             if sucIndicator:
@@ -64,13 +111,12 @@ class SlotcarClient():
             self.last_packet_sent = as_is
         self.ser.write(self.last_packet_sent)
         self.response = self.ser.read(15)  # manual says that there are 14 bytes. I tried it and there seems to be an
-                                            # an extra byte after the 9th byte.
-
+        # an extra byte after the 9th byte.
 
     def read_packet(self):
-        # implement a mechanism to tell me that after two tries 6CPB won't resend it anymore
-        # there must have been an error reading if we didn't get 15. 15 seems to be the right number of packets, don't know why
-
+        """Reads the packet we received according to the protocol. Sets all relevant attributes in the proccess."""
+        # The following part seems to give errors at times, because we are working with 15 bytes instead of 14
+        # and the 6CPB seems to be working inconsistently at times.
         if self.response[14] != self.checksum_calc(self.response[:-1]):
             if self.checksum_tries == 2:
                 self.checksum_tries = 0
@@ -87,14 +133,16 @@ class SlotcarClient():
         self.received_time = self.compute_response_time()
         self.set_all_times(print_update=True)
 
-    #-----------------------------
-    #helper functions
+    # -----------------------------
+    # helper functions
 
-    # returns a byte which gives instruction to the car when using write_packet
-    # brake boolean
-    # laneChange boolean
-    # power int 0-63
     def car_byte(self, brake, laneChange, power):
+        """
+        Returns a byte which gives instruction to the car when using write_packet
+           brake boolean
+           laneChange boolean
+           power int [0-63]
+        """
         pre_output = 0
         if brake:
             pre_output = 1
@@ -107,14 +155,14 @@ class SlotcarClient():
         pre_output = (pre_output << 6) | power
         return pre_output ^ 0xFF
 
-    # returnes the led_byte to be used in write_packet
     def led_byte(self, greenLed, redLed, led6, led5, led4, led3, led2, led1):
+        """Returns the led_byte to be used in a write_packet."""
         return greenLed << 7 | redLed << 6 | led6 << 5 | led5 << 4 | led4 << 3 | led3 << 2 | led2 << 1 | led1
 
-    # calculates the checksum for the packet to be sent. as seen in the
-    # C7042 Scalextric 6 Car Power Base SNC Communication Protocol pdf
-    # input is an array of the bytes to be used
     def checksum_calc(self, packet):
+        """Calculates the checksum for the packet to be sent, as seen in the
+            Protocol.
+            Input is an array of the packet bytes to be used."""
         self.crc8 = self.lookup_table[packet[0]]
         if len(packet) == 8:
             for i in range(1, 8):
@@ -124,9 +172,8 @@ class SlotcarClient():
                 self.crc8 = self.lookup_table[self.crc8 ^ packet[i]]
         return self.crc8
 
-
-    # set all the relvant times and computes the lap times for the cars.
     def set_all_times(self, print_update=False):
+        """Set all the relevant times and computes the lap times for the cars."""
         if self.carID == 0:
             self.game_timer = self.received_time
             return
@@ -139,9 +186,9 @@ class SlotcarClient():
             if print_update:
                 print("Last lap time for car " + str(self.carID) + ": " + str(self.car_times[self.carID - 1][0]))
 
-    # computes the real time from the encoded byte time passed as given by the last response.
     def compute_response_time(self, bytes_times=None):
-        if bytes_times == None:
+        """Computes the real time from the encoded byte time as given by the last response."""
+        if bytes_times is None:
             bytes_times = list(self.response)[9:13][::-1]
         temp_time = 0
         for elem in bytes_times:
@@ -149,25 +196,37 @@ class SlotcarClient():
         temp_time = temp_time if temp_time != 0xFFFFFFFF else 0
         return temp_time * self.timer_increment
 
-    # position starting from 0. end_position inclusive. Start_pos > end_pos
-    def get_bits(self, byte, start_pos, end_pos=None):
+    def get_bits(self, bitstring, start_pos, end_pos=None):
+        """Given the bitstring, get the bits starting at start_pos to end_pos.
+           The least significant bit has index 0. end_position inclusive. Start_pos > end_pos.
+           If no end_pos given, then assume end position is the LSB."""
         if end_pos == None:
-            return (byte & (1 << start_pos)) >> start_pos
+            return (bitstring & (1 << start_pos)) >> start_pos
         else:
             mask = (0xFFFF ^ (0xFFFF << (start_pos - end_pos + 1))) & 0xFFFF  # this is ridiculous
-            return (byte & (mask << end_pos)) >> end_pos
+            return (bitstring & (mask << end_pos)) >> end_pos
 
-    # setting handeset array
-    def set_handsets_on(self):
+    @property
+    def handsets_on(self):
         for i in range(1, 7):
             self.handsets_on[i - 1] = self.get_bits(self.response[0], i)
+        return self.handsets_on
 
-    # sets the handset info as described in constructor
-    def set_handsets_info(self):
+    @handsets_on.setter
+    def handsets_on(self, value):
+        self.handsets_on = value
+
+    @property
+    def handsets_info(self):
         for i in range(1, 7):
             self.handsets_info[i - 1] = [self.get_bits(self.response[i], 7),
                                          self.get_bits(self.response[i], 6),
                                          self.get_bits(self.response[i], 5, 0)]
+        return self.handsets_info
+
+    @handsets_info.setter
+    def handsets_info(self, value):
+        self.handsets_info = value
 
 
 # tests the class

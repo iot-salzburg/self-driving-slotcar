@@ -15,8 +15,40 @@ import json
 # to have multiple mqtt queues. something to consider for later. does not seem significant now.
 
 class EspClient:
-    # server_ip of mqtt host, type string.
-    # port number, type int. (usually the mqtt port)
+    """The class which handles the communication with the ESP device.
+    Relevant attributes:
+        self.server_ip:
+                    The ip address of the mqtt host. In the current case, we are using a Raspberry pi, which 
+                    has to be connected over sensornet.
+        self.port:
+                The port for mqtt services. Standard is 1883.
+        self.debugging:
+                    Whether to print certain statements and print all the data which is received.
+        self.raw_data:
+                    Should the data be put in the queue for the algorithm without being normalized and offset.
+        self.num_cal:
+                How many data points should be used to calibrate (can be modified if wanted).
+        self.data:
+                Is the queue which we receive from the baseAI class through which we can communicate the data we 
+                receive.
+        self.gravity:
+                The gravity range setting of the MPU. We get +/-self.gravity m/s^2 values.
+        self.gyro:
+                The gyroscope range setting of the MPU. We get +/-self.gyro degrees/second.
+        self.index_data:
+                    A mapping of names  "Time", "GyroX", "GyroY", "GyroZ", "AcX", "AcY", "AcZ" to indexes in the 
+                    self.data array (2nd level). 
+        self.norm_const:
+                    The normalization constants for calculating the adjusted data values received from the esp.
+                    e.g. AcX_data has to be transformed to (AcX_data - offset) * norm_const = 
+                    (AcX_data - offset)/self.range_pos * self. gravity.
+        self.init_queue:
+                    The multiprocessing queue through which all
+                    relevant data which is not sensor data will be transmitted. The first item will tell
+                    how many elements to expect.
+
+        """
+
     def __init__(self, server_ip="192.168.48.188", port=1883, debugging=False, raw_data=False):
         self.server_ip = server_ip
         self.port = port
@@ -36,9 +68,6 @@ class EspClient:
         # will be initialized in calibration process.
         self.calibration_data = None
 
-        # will be set by process which initializes this class. We are not
-        # going to worry about the case where the esp resets and will hence
-        # not reinitialize this.
         self.data = None
 
         # MPU additional numbers which can be adjusted
@@ -60,17 +89,19 @@ class EspClient:
         # whether to return only raw data
         self.raw_data = raw_data
 
+        self.init_queue = None
+
     def on_connect(self, client, userdata, flags, rc):
-        # subscription will always be automatically renewed here. even
-        # by connection failure
+        """subscription will always be automatically renewed here. even
+        by connection failure"""
         client.subscribe("Test_topic")
         print("Connected to broker and topic")
 
     # TODO Note, we are not recalibrating when the device restarts.
     # the call back for when a PUBLISH message is received from the server.
     def on_message(self, client, userdata, msg):
-        # to have the message in the right format. The first item in the split string is the type of message sent.
-        # More info in ESP8266 code
+        """Will be called when we receive a message. 
+        This method calibrates, transforms and stores the data accoridingly."""
         decoded_msg = msg.payload.decode(errors="replace")
         # if decoding fails, just wait for next message. 
         if decoded_msg == "U+FFFD":
@@ -87,7 +118,6 @@ class EspClient:
                     print("Calibration will start now. Do not move the object.")
                     self.num_cal_so_far = self.num_cal_so_far + 1
                     self.wait_time = -1
-
 
             # handles the last cycle
             elif self.num_cal_so_far == self.num_cal:
@@ -139,7 +169,6 @@ class EspClient:
                 sys.stdout.flush()
 
         else:
-
             temp_data = np.array(list(true_msg[0].values()), float)
             if self.raw_data:
                 self.data.put(temp_data)  # message is sent in a list.
@@ -149,17 +178,18 @@ class EspClient:
                 print(list(true_msg[0].values()))
                 print(temp_data)
 
-    # set the queue through which data should be received.
     def start_esp(self, data_queue, init_queue):
+        """Call this method to start the communication with the ESP device. Also, provide a 
+        multiprocessing queue through which the esp can communicate its data."""
         self.data = data_queue
         self.init_queue = init_queue
+        # put in how many elements to expect.
+        if self.raw_data:
+            self.init_queue.put(5)
+        else:
+            self.init_queue.put(3)
         self.client.loop_forever()
 
-    def disconnect(self):
-        self.client.disconnect()
-
-    def connect(self):
-        self.client.connect(self.server_ip, self.port)
 
 
 if __name__ == "__main__":

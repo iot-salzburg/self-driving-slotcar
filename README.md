@@ -23,10 +23,7 @@ For normal operation.
 • Connect the battery to the hardware setup on the slotcar. The ESP should automatically
     setup a connection and transmit data.
   TODO maybe more specific
-• As of now, you can run the data_playground.py as:
-    python3 data_playground.py
-  It will automatically connect with the ESP and finish calibration and show a plot
-  of a moving average for a given direction.
+
 
 
 

@@ -1,4 +1,3 @@
-import multiprocessing as mp
 import time
 import numpy as np
 import Data_Manipulation as dm
@@ -20,7 +19,7 @@ class SimpleAI(AI_Base.BaseAI):
 
     # expecting last_cross_acceleration in m/s^2
     def main(self):
-
+        """The main loop which handles the algorithm."""
         while True:
             last = self.data[-5:, self.index_data["AcX"]].cumsum()[-1:]/5
             # last = self.data[-1: , self.index_data["AcX"]]
@@ -36,6 +35,7 @@ class SimpleAI(AI_Base.BaseAI):
                 self.change_power(increase=True)
 
     def change_power(self, increase):
+        """Changes the power which is delivered to the slotcar on the track."""
         if increase:
             if self.last_power + 1 <= self.max_power:
                 self.last_power += 1
