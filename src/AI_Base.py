@@ -71,7 +71,7 @@ class BaseAI:
         for i in range(size):
             data = self.__esp_data.get()
             temp[i] = data
-        if self._data is None:
+        if self._data is None or self._data == []:
             self._data = temp
         else:
             self._data = np.append(self._data, temp, axis=0)
