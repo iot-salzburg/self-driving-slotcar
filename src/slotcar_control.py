@@ -2,7 +2,7 @@ import serial
 import numpy as np
 import time
 
-
+# TODO reset the slotcar client when initialized
 class SlotcarClient:
     """
     The class which handles the communication with the SlotCar track (currently 6 car power base).
@@ -86,7 +86,9 @@ class SlotcarClient:
         self.checksum_tries = 0
         self.track_power_status = -1
 
-    def write_packet(self, as_is=None, sucIndicator=True, start=False, firstCar=0xFF, secondCar=0xFF,
+        self.write_packet(reset = True) # reset and initialize the track.
+
+    def write_packet(self, as_is=None, sucIndicator=True, reset=False, firstCar=0xFF, secondCar=0xFF,
                      thirdCar=0xFF, fourthCar=0xFF, fifthCar=0xFF, sixthCar=0xFF,
                      ledByte=0x00):
         """
@@ -95,16 +97,22 @@ class SlotcarClient:
         start = boolean whether we are starting transmission
         firstCar, secondCar,..., = the byte to send for the given car
         ledByte is the byte to send for the led control
+        as_is = is either a packet or None. If it is a packet, then just send it as it is.
+                 otherwise send a normal packet.
+        reset = Initializes and resets the track to a default state.
         """
         if as_is is None:
             pre_output = []
-            if sucIndicator:
+            if sucIndicator or reset:
                 pre_output.append(0xFF)
             else:
                 pre_output.append(0x7F)
             cars = [firstCar, secondCar, thirdCar, fourthCar, fifthCar, sixthCar]
             pre_output = pre_output + cars
-            pre_output.append(ledByte)
+            if reset:
+                pre_output.append(self.led_byte(1, 1, 0, 0, 0, 0, 0, 0))
+            else:
+                pre_output.append(ledByte)
             pre_output.append(self.checksum_calc(pre_output))
             self.last_packet_sent = bytearray(pre_output)
         else:
@@ -125,10 +133,9 @@ class SlotcarClient:
             self.write_packet(bytearray([0x7F] + list(self.last_packet_sent[1:])))
             self.read_packet()
         self.track_power_status = self.get_bits(self.response[0], 0)  # get the last bit. boolean
-        self.set_handsets_on()
-        self.set_handsets_info()
         self.aux_current = self.response[7]
-
+        self.handsets_info
+        self.handsets_on
         self.carID = self.get_bits(self.response[8], 2, 0)  # 000 is game timer and 111 is invalid ID
         self.received_time = self.compute_response_time()
         self.set_all_times(print_update=True)
@@ -156,7 +163,8 @@ class SlotcarClient:
         return pre_output ^ 0xFF
 
     def led_byte(self, greenLed, redLed, led6, led5, led4, led3, led2, led1):
-        """Returns the led_byte to be used in a write_packet."""
+        """Returns the led_byte to be used in a write_packet. To start a game,
+        turn off the red light and turn on the green one."""
         return greenLed << 7 | redLed << 6 | led6 << 5 | led5 << 4 | led4 << 3 | led3 << 2 | led2 << 1 | led1
 
     def checksum_calc(self, packet):
@@ -209,24 +217,24 @@ class SlotcarClient:
     @property
     def handsets_on(self):
         for i in range(1, 7):
-            self.handsets_on[i - 1] = self.get_bits(self.response[0], i)
-        return self.handsets_on
+            self._handsets_on[i - 1] = self.get_bits(self.response[0], i)
+        return self._handsets_on
 
     @handsets_on.setter
     def handsets_on(self, value):
-        self.handsets_on = value
+        self._handsets_on = value
 
     @property
     def handsets_info(self):
         for i in range(1, 7):
-            self.handsets_info[i - 1] = [self.get_bits(self.response[i], 7),
+            self._handsets_info[i - 1] = [self.get_bits(self.response[i], 7),
                                          self.get_bits(self.response[i], 6),
                                          self.get_bits(self.response[i], 5, 0)]
-        return self.handsets_info
+        return self._handsets_info
 
     @handsets_info.setter
     def handsets_info(self, value):
-        self.handsets_info = value
+        self._handsets_info = value
 
 
 # tests the class

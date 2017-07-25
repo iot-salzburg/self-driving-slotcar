@@ -5,9 +5,9 @@ import AI_Base
 
 
 class SimpleAI(AI_Base.BaseAI):
-    def __init__(self, carID=2):
-        super.__init__(carID = carID)
-        self.max_acceleration = 1 * 0.23  # m/9.8*s^2 Calculates by estimating force of friction with a slope and raeding off accelerometer data
+    def __init__(self, carID=2, print_power = False, print_lap_times = True):
+        super().__init__(carID = carID)
+        self.max_acceleration = 1 * 0.23  # m/9.8*s^2 Calculates by estimating force of friction with a slope and reading off accelerometer data
         self.error_margin = 0.09  # m/s^2
         self.game_started = False
         self.last_power = 5
@@ -17,13 +17,17 @@ class SimpleAI(AI_Base.BaseAI):
         self.moving_averages = np.empty([0, 7])
         self.data_manip = dm.DataManipulation()
 
+        self.print_power = print_power
+        self.print_lap_times = print_lap_times
+
+        self.last_lap = -1
+
     # expecting last_cross_acceleration in m/s^2
     def main(self):
         """The main loop which handles the algorithm."""
+        print("The algorithm has started.")
         while True:
-            last = self.data[-5:, self.index_data["AcX"]].cumsum()[-1:]/5
-            # last = self.data[-1: , self.index_data["AcX"]]
-            print(last)
+            last = self.data[-5:, self.index_data["AcX"]].cumsum()[-1:]/5 # moving average. Of last 5 accelerations.
             if abs(last) > self.max_acceleration:
                 # call function which reduces acceleration
                 self.change_power(increase=False)
@@ -46,14 +50,21 @@ class SimpleAI(AI_Base.BaseAI):
                 self.last_power -= 6
             else:
                 self.last_power = self.min_power
-        print(self.last_power)
+        if self.print_power:
+            print(self.last_power)
         self.slotcar_client.write_packet(sucIndicator=True,
                                          secondCar=self.slotcar_client.car_byte(0, 0, int(self.last_power)),
                                          ledByte=self.slotcar_client.led_byte(1, 0, 0, 0, 0, 0, 1, 0))
-        self.slotcar_client.read_packet()  # commented out because read is weird
+        self.slotcar_client.read_packet()
+        if self.print_lap_times and self.slotcar_client.car_times[self.carID][0] != self.last_lap:
+            self.last_lap = self.slotcar_client.car_times[self.carID][0]
+            print("My last lap time: " + str(self.last_lap))
+            
+         
 
 
 
 if __name__ == "__main__":
     ai = SimpleAI()
-    ai.start_me()
+    ai.start()
+    ai.main()

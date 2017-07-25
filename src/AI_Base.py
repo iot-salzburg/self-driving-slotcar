@@ -34,9 +34,15 @@ class BaseAI:
                             to initialize the class.
             self.__esp_client:
                             The esp_client.
+            self.norm_const:
+                           If we choose to work with raw data, we will get the information of how to scale the
+                           data from here. Again, work with self.index_data to know which index to use.
+            self.calibration_data:
+                           If we choose to work with raw data, we can get the information of how to offset the
+                           data from here. Again, work with self.index_data to know which index to use.
             
     """
-    def __init__(self, carID=2):
+    def __init__(self, carID=2, raw_data=False):
         self.slotcar_client = scc.SlotcarClient()
         self.carID = carID
 
@@ -52,6 +58,10 @@ class BaseAI:
         self.initialized = False
 
         self.__esp_client = None
+        self.calibration_data = None
+        self.norm_const = None
+
+        self.raw_data = raw_data
 
     def __get_new_data__(self):
         """Gets all the sensor data that is in the queue from ESP."""
@@ -61,10 +71,10 @@ class BaseAI:
         for i in range(size):
             data = self.__esp_data.get()
             temp[i] = data
-        if self.data is None:
-            self.data = temp
+        if self._data is None:
+            self._data = temp
         else:
-            self.data = np.append(self.data, temp, axis=0)
+            self._data = np.append(self._data, temp, axis=0)
 
     def init_from_queue(self):
         """Initializes all the variables by getting the information from the ESP_Client.
@@ -73,18 +83,32 @@ class BaseAI:
         If we already initialized, return (could also raise exception)."""
         if self.initialized:
             return
-        while self.__init_queue.qsize() != 3:
+        while self.__init_queue.qsize() < 1:
+            time.sleep(0.5)
+        to_expect = self.__init_queue.get()
+        while self.__init_queue.qsize() != to_expect:
             time.sleep(1)
-        self.index_data = self.__init_queue.get()
-        self.gravity = self.__init_queue.get()
-        self.gyro = self.__init_queue.get()
+        if not self.raw_data:
+            if to_expect != 3:
+                raise Exception("We have not received the right number of init items.")
+            self.index_data = self.__init_queue.get()
+            self.gravity = self.__init_queue.get()
+            self.gyro = self.__init_queue.get()
+        elif self.raw_data:
+            if to_expect != 5:
+                raise Exception("We have not received the right number of init items.")
+            self.norm_const = self.__init_queue.get()
+            self.index_data = self.__init_queue.get()
+            self.calibration_data = self.__init_queue.get()
+            self.gravity = self.__init_queue.get()
+            self.gyro = self.__init_queue.get()
         self.initialized = True
 
-    def start_esp(self):
+    def start(self):
         """Starts the communication with the ESP client. Should be called before AI starts in order
         to start the data transfer.
         Also sets all needed attributes."""
-        self.__esp_client = esp.EspClient(debugging=False)
+        self.__esp_client = esp.EspClient(debugging=False, raw_data = self.raw_data)
         self.__init_queue = mp.Queue()
         self.__esp_data = mp.Queue()
         p = mp.Process(target=self.__esp_client.start_esp, args=(self.__esp_data, self.__init_queue,))
@@ -96,11 +120,11 @@ class BaseAI:
         """I am the data property. Store all sensor data received from esp.
         Each time you access me, I will update myself to all the new data received from the esp_client."""
         self.__get_new_data__()
-        return self.data
+        return self._data
 
     @data.setter
     def data(self, value):
-        self.data = value
+        self._data = value
 
 
 

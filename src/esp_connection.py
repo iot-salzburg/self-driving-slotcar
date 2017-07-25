@@ -180,7 +180,9 @@ class EspClient:
 
     def start_esp(self, data_queue, init_queue):
         """Call this method to start the communication with the ESP device. Also, provide a 
-        multiprocessing queue through which the esp can communicate its data."""
+        multiprocessing queue through which the esp can communicate its data. If we are handling raw input
+        we put 5 items in the init_queue, otherwise 3. This will be told to the receiver by putting the number of
+        items to expect at the beginning of the queue."""
         self.data = data_queue
         self.init_queue = init_queue
         # put in how many elements to expect.
