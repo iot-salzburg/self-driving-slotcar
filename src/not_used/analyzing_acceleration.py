@@ -2,7 +2,7 @@ import sys as sys
 import time
 import matplotlib
 
-# have to do this to set backend of matplotlib. otherwise now graph is displayed
+# have to do this to set backend of matplotlib. otherwise no graph is displayed
 matplotlib.use("TKAgg")
 import matplotlib.pyplot as plt
 import numpy as np

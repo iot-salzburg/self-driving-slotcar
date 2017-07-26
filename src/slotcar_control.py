@@ -48,6 +48,9 @@ class SlotcarClient:
                         packet at most 2 times.
         self.track_power_status:
                         Whether power is properly delivered to the tracks (boolean).
+        self.print_update:
+                        A boolean which tells wether or not to print the lap updates when they are received. This
+                        means printing the current lap time for a car.
     """
 
     # the lookup table for the crc checksum
@@ -68,7 +71,7 @@ class SlotcarClient:
                     0xAE, 0xA9, 0xA0, 0xA7, 0xB2, 0xB5, 0xBC, 0xBB, 0x96, 0x91, 0x98, 0x9F, 0x8A, 0x8D, 0x84, 0x83,
                     0xDE, 0xD9, 0xD0, 0xD7, 0xC2, 0xC5, 0xCC, 0xCB, 0xE6, 0xE1, 0xE8, 0xEF, 0xFA, 0xFD, 0xF4, 0xF3]
 
-    def __init__(self):
+    def __init__(self, print_lap_update=False):
         # set the serial. check for which port. In the raspberry put it in the top slot. TODO
         self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate=19200)
         self.handsets_on = [0, 0, 0, 0, 0, 0]  # if the connection to the ith handset is established
@@ -85,6 +88,8 @@ class SlotcarClient:
                                   dtype=np.float)  # 2D array where the first level detrmines the car i=0 for car1 etc. and second level has form [last_lap_time, last_global_time] (global time is the time since when the car passed SF line for the first time)
         self.checksum_tries = 0
         self.track_power_status = -1
+
+        self.print_update = print_lap_update
 
         self.write_packet(reset = True) # reset and initialize the track.
 
@@ -138,7 +143,7 @@ class SlotcarClient:
         self.handsets_on
         self.carID = self.get_bits(self.response[8], 2, 0)  # 000 is game timer and 111 is invalid ID
         self.received_time = self.compute_response_time()
-        self.set_all_times(print_update=True)
+        self.set_all_times()
 
     # -----------------------------
     # helper functions
@@ -191,7 +196,7 @@ class SlotcarClient:
         else:
             self.car_times[self.carID - 1] = [self.received_time - self.car_times[self.carID - 1][1],
                                               self.received_time]
-            if print_update:
+            if self.print_update:
                 print("Last lap time for car " + str(self.carID) + ": " + str(self.car_times[self.carID - 1][0]))
 
     def compute_response_time(self, bytes_times=None):

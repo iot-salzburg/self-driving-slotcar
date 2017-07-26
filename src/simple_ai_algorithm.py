@@ -56,8 +56,8 @@ class SimpleAI(AI_Base.BaseAI):
                                          secondCar=self.slotcar_client.car_byte(0, 0, int(self.last_power)),
                                          ledByte=self.slotcar_client.led_byte(1, 0, 0, 0, 0, 0, 1, 0))
         self.slotcar_client.read_packet()
-        if self.print_lap_times and self.slotcar_client.car_times[self.carID][0] != self.last_lap:
-            self.last_lap = self.slotcar_client.car_times[self.carID][0]
+        if self.print_lap_times and self.slotcar_client.car_times[self.carID-1][0] != self.last_lap:
+            self.last_lap = self.slotcar_client.car_times[self.carID-1][0]
             print("My last lap time: " + str(self.last_lap))
             
          

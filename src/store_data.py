@@ -17,7 +17,6 @@ class StoreData(AI_Base.BaseAI):
         self.print_lap_times = print_lap_times
 
         self.num_laps = 0
-
         self.global_time = -1
 
     # expecting last_cross_acceleration in m/s^2
@@ -30,12 +29,18 @@ class StoreData(AI_Base.BaseAI):
                                              secondCar=self.slotcar_client.car_byte(0, 0, int(self.power)),
                                              ledByte=self.slotcar_client.led_byte(1, 0, 0, 0, 0, 0, 1, 0))
             self.slotcar_client.read_packet()
-            if self.slotcar_client.car_times[self.carID][1] != self.global_time:
-                self.global_time = self.slotcar_client.car_times[self.carID][1]
+            if self.slotcar_client.car_times[self.car_time_index][1] != self.global_time:
+                self.global_time = self.slotcar_client.car_times[self.car_time_index][1]
                 self.num_laps += 1
-            print("Number of laps: " + str(self.num_laps))
+                print("Number of laps: " + str(self.num_laps))
+
+                
+        self.slotcar_client.write_packet(sucIndicator=True,
+                    secondCar=self.slotcar_client.car_byte(0, 0, int(0)),
+                    ledByte=self.slotcar_client.led_byte(1, 0, 0, 0, 0, 0, 1, 0))
         with open("data_5_laps", 'w') as f:
-            f.write(json.dumps([self.index_data, self.data]))
+            f.write(json.dumps([self.index_data, self.data.tolist()]))
+        print("Done storing data.")
 
 
 

@@ -126,5 +126,11 @@ class BaseAI:
     def data(self, value):
         self._data = value
 
+    @property
+    def car_time_index(self):
+        """I am the index to use when you want to get the car with ID x.
+        I will simply give you x-1."""
+        return self.carID - 1
+
 
 
