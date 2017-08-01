@@ -9,10 +9,10 @@ sensornet.
 
 The current setup has a communication loop as follows:
 ======================================================
-• On the slotcar we have mounted a 3D printed case which hosts the sensors needed. (TODO Provide Link to 3D file).
+• On the slotcar we have mounted a 3D printed case which hosts the sensors needed. (./Hardware/CarCover.stl).
 
 • Acceleration and Gyroscope data are provided by the MPU6050
-and are transmitted through the ESP-8266-01 with MQTT over the sensornet. (TODO Provide link to hardware setup)
+and are transmitted through the ESP-8266-01 with MQTT over the sensornet. (./Hardware/Sensors/esp_mpu_circuit.fzz)
 A provided RaspberryPi serves as the host for MQTT. The current topic used is "Test_topic", which can be
 changed at any time.
 
@@ -130,7 +130,8 @@ ESP:
 ====
 All relevant settings for the ESP can be found in its code. It simply connects to the sensornet, polls the
 data from the MPU6050 and publishes them to the host (raspberry pi) and to the topic 'Test_Topic'.
-To control the ESP check out the Hardware drawing to see how to use the hardware and check out the code which specifies
+To control the ESP check out the Hardware drawing (./Hardware/Sensors/esp_mpu_circuit.fzz) to see how to use
+the hardware and check out the code which specifies
 what was done and which sources were used. Generally use the Arduino IDE to get all relevant dependencies and treat the
 ESP as a arduino object with start and update loop.
 
