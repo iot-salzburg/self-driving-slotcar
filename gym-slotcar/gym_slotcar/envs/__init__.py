@@ -1,0 +1,1 @@
+from gym_slotcar.envs.foo_env import SlotcarEnv
