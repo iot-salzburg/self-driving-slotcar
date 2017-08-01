@@ -168,18 +168,18 @@ def detect_center_coords(img):
 
 
 # noinspection PyArgumentList
-def convert_video(video_file, debug=False):
+def convert_video(video, debug=False):
     """ Normalises each frame in the given video files """
 
     makedirs('output', exist_ok=True)
 
     # compute transformation matrix
-    transformation_file = join('output', 'transformation_' + video_file + '.pickle')
+    transformation_file = join('output', 'transformation_' + str(video) + '.pickle')
     if exists(transformation_file):
         with open(transformation_file, 'rb') as pickle_file:
             transformation = pickle.load(pickle_file)
     else:
-        transformation = compute_transformation(video_file=video_file, debug=debug)
+        transformation = compute_transformation(video_file=video, debug=debug)
         with open(transformation_file, 'wb') as pickle_file:
             pickle.dump(transformation, pickle_file)
 
@@ -189,7 +189,7 @@ def convert_video(video_file, debug=False):
 
     fgbg = cv2.createBackgroundSubtractorMOG2()
 
-    cap = cv2.VideoCapture(video_file)
+    cap = cv2.VideoCapture(video)
     largest_contour = None
     center_coords = None
     frame_counter = 0
@@ -236,4 +236,4 @@ def convert_video(video_file, debug=False):
 
 
 if __name__ == '__main__':
-    convert_video(video_file='input.m4v', debug=True)
+    convert_video(video=0, debug=True)
