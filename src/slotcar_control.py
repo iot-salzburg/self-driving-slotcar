@@ -2,6 +2,7 @@ import serial
 import numpy as np
 import time
 
+
 # TODO reset the slotcar client when initialized
 class SlotcarClient:
     """
@@ -9,6 +10,9 @@ class SlotcarClient:
     Protocol based on http://ssdc.jackaments.com/saved/C7042_6CarPowerBase_SNC_Protocol_v01-public.pdf .
     
     Attributes:
+        port:
+            Check on your machine on which USB slot you connect the serial device for the 6CPB.
+            Find the port by going to bash and typing ls /dev/tty.* for mac (linux, etc).
         self.handsets_on:
                         Which handsets are being used (not important).
         self.handsets_info:
@@ -71,9 +75,10 @@ class SlotcarClient:
                     0xAE, 0xA9, 0xA0, 0xA7, 0xB2, 0xB5, 0xBC, 0xBB, 0x96, 0x91, 0x98, 0x9F, 0x8A, 0x8D, 0x84, 0x83,
                     0xDE, 0xD9, 0xD0, 0xD7, 0xC2, 0xC5, 0xCC, 0xCB, 0xE6, 0xE1, 0xE8, 0xEF, 0xFA, 0xFD, 0xF4, 0xF3]
 
-    def __init__(self, print_lap_update=False):
+    def __init__(self, print_lap_update=False, port='/dev/ttyUSB0'):
         # set the serial. check for which port. In the raspberry put it in the top slot. TODO
-        self.ser = serial.Serial(port='/dev/ttyUSB0', baudrate=19200)
+        # find the port by going to bash and typing ls /dev/tty.* in mac
+        self.ser = serial.Serial(port=port, baudrate=19200)
         self.handsets_on = [0, 0, 0, 0, 0, 0]  # if the connection to the ith handset is established
         self.handsets_info = [[0], [0], [0], [0], [0], [0]]
         self.response = None
@@ -91,7 +96,7 @@ class SlotcarClient:
 
         self.print_update = print_lap_update
 
-        self.write_packet(reset = True) # reset and initialize the track.
+        self.write_packet(reset=True)  # reset and initialize the track.
 
     def write_packet(self, as_is=None, sucIndicator=True, reset=False, firstCar=0xFF, secondCar=0xFF,
                      thirdCar=0xFF, fourthCar=0xFF, fifthCar=0xFF, sixthCar=0xFF,
@@ -115,7 +120,7 @@ class SlotcarClient:
             cars = [firstCar, secondCar, thirdCar, fourthCar, fifthCar, sixthCar]
             pre_output = pre_output + cars
             if reset:
-                pre_output.append(self.led_byte(1, 1, 0, 0, 0, 0, 0, 0))
+                pre_output.append(self.led_byte())
             else:
                 pre_output.append(ledByte)
             pre_output.append(self.checksum_calc(pre_output))
@@ -148,7 +153,7 @@ class SlotcarClient:
     # -----------------------------
     # helper functions
 
-    def car_byte(self, brake, laneChange, power):
+    def car_byte(self, brake=False, laneChange=False, power=0):
         """
         Returns a byte which gives instruction to the car when using write_packet
            brake boolean
@@ -167,7 +172,8 @@ class SlotcarClient:
         pre_output = (pre_output << 6) | power
         return pre_output ^ 0xFF
 
-    def led_byte(self, greenLed, redLed, led6, led5, led4, led3, led2, led1):
+    def led_byte(self, greenLed=True, redLed=True, led6=False, led5=False, led4=False, led3=False, led2=False,
+                 led1=False):
         """Returns the led_byte to be used in a write_packet. To start a game,
         turn off the red light and turn on the green one."""
         return greenLed << 7 | redLed << 6 | led6 << 5 | led5 << 4 | led4 << 3 | led3 << 2 | led2 << 1 | led1
@@ -198,6 +204,11 @@ class SlotcarClient:
                                               self.received_time]
             if self.print_update:
                 print("Last lap time for car " + str(self.carID) + ": " + str(self.car_times[self.carID - 1][0]))
+
+    def get_lap_time(self, carID):
+        """Will return a tuple. The first element is the last lap time and the second is how many seconds ago
+         the lap time was updated."""
+        return self.car_times[carID][0], self.game_timer - self.car_times[carID][1]
 
     def compute_response_time(self, bytes_times=None):
         """Computes the real time from the encoded byte time as given by the last response."""
@@ -233,8 +244,8 @@ class SlotcarClient:
     def handsets_info(self):
         for i in range(1, 7):
             self._handsets_info[i - 1] = [self.get_bits(self.response[i], 7),
-                                         self.get_bits(self.response[i], 6),
-                                         self.get_bits(self.response[i], 5, 0)]
+                                          self.get_bits(self.response[i], 6),
+                                          self.get_bits(self.response[i], 5, 0)]
         return self._handsets_info
 
     @handsets_info.setter

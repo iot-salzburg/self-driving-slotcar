@@ -16,29 +16,34 @@ class StoreData(AI_Base.BaseAI):
         self.print_power = print_power
         self.print_lap_times = print_lap_times
 
-        self.num_laps = 0
+        self.seconds = 20
+
+        self.num_laps=10
+        self.count_num_laps = 0
         self.global_time = -1
 
     # expecting last_cross_acceleration in m/s^2
     def main(self):
         """The main loop which handles the algorithm."""
         print("The data storing has started.")
-
-        while self.num_laps < 5:
-            self.slotcar_client.write_packet(sucIndicator=True,
-                                             secondCar=self.slotcar_client.car_byte(0, 0, int(self.power)),
-                                             ledByte=self.slotcar_client.led_byte(1, 0, 0, 0, 0, 0, 1, 0))
-            self.slotcar_client.read_packet()
-            if self.slotcar_client.car_times[self.car_time_index][1] != self.global_time:
-                self.global_time = self.slotcar_client.car_times[self.car_time_index][1]
-                self.num_laps += 1
-                print("Number of laps: " + str(self.num_laps))
-
-                
-        self.slotcar_client.write_packet(sucIndicator=True,
-                    secondCar=self.slotcar_client.car_byte(0, 0, int(0)),
-                    ledByte=self.slotcar_client.led_byte(1, 0, 0, 0, 0, 0, 1, 0))
-        with open("data_5_laps", 'w') as f:
+        start_time = time.time()
+        #while self.count_num_laps < self.num_laps:
+        while time.time() - start_time < self.seconds:
+            print(int(time.time() - start_time))
+        #     self.slotcar_client.write_packet(sucIndicator=True,
+        #                                      secondCar=self.slotcar_client.car_byte(0, 0, int(self.power)),
+        #                                      ledByte=self.slotcar_client.led_byte(1, 0, 0, 0, 0, 0, 1, 0))
+        #     self.slotcar_client.read_packet()
+        #     if self.slotcar_client.car_times[self.car_time_index][1] != self.global_time:
+        #         self.global_time = self.slotcar_client.car_times[self.car_time_index][1]
+        #         self.count_num_laps += 1
+        #         print("Number of laps: " + str(self.count_num_laps))
+        #
+        #
+        # self.slotcar_client.write_packet(sucIndicator=True,
+        #             secondCar=self.slotcar_client.car_byte(0, 0, int(0)),
+        #             ledByte=self.slotcar_client.led_byte(1, 0, 0, 0, 0, 0, 1, 0))
+        with open("data_10_laps", 'w') as f:
             f.write(json.dumps([self.index_data, self.data.tolist()]))
         print("Done storing data.")
 
