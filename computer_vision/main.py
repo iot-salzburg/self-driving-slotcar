@@ -5,7 +5,8 @@ from os.path import exists, join
 from os import makedirs
 import pickle
 
-a = np.array([0, 0], dtype='float32')
+image_selection = np.array([0, 0], dtype='float32')
+OUTPUT_SIZE = [6000, 9000]
 
 
 def remove_fisheye(img):
@@ -20,8 +21,9 @@ def remove_fisheye(img):
     Knew = K.copy()
     Knew[(0, 1), (0, 1)] = 0.4 * Knew[(0, 1), (0, 1)]
 
-    return cv2.fisheye.undistortImage(img, K, D=D, Knew=Knew)
-    # return img
+    # return cv2.fisheye.undistortImage(img, K, D=D, Knew=Knew)
+    return img
+
 
 # noinspection PyArgumentList
 def compute_transformation(video_file, debug=False):
@@ -32,9 +34,9 @@ def compute_transformation(video_file, debug=False):
     def get_coords(select_image):
         # noinspection PyCompatibility
         def getxy(event, row, col, flags, param):
-            global a
+            global image_selection
             if event == cv2.EVENT_LBUTTONDOWN:
-                a = np.vstack([a, np.hstack([row, col])])
+                image_selection = np.vstack([image_selection, np.hstack([row, col])])
                 cv2.circle(select_image, (row, col), 3, (0, 0, 255), -1)
                 cv2.imshow('image', select_image)
                 print("(row, col) = ", (row, col))
@@ -52,10 +54,10 @@ def compute_transformation(video_file, debug=False):
         cv2.destroyAllWindows()
 
         # obtain the matrix of the selected points
-        selected_points = a[1:, :]
+        selected_points = image_selection[1:, :]
         return np.float32(selected_points)
 
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(video_file)
     ret, distorted_img = cap.read()
 
     # remove fisheye distortion
@@ -71,7 +73,7 @@ def compute_transformation(video_file, debug=False):
 
     # perform homography
     transformation = cv2.getPerspectiveTransform(original_corners, new_corners)
-    dst = cv2.warpPerspective(img, transformation, (6000, 9000))
+    dst = cv2.warpPerspective(img, transformation, tuple(OUTPUT_SIZE))
 
     if debug:
         plt.figure()
@@ -84,6 +86,85 @@ def compute_transformation(video_file, debug=False):
     cv2.destroyAllWindows()
 
     return transformation
+
+
+def pre_process_image(img, transformation, largest_contour):
+    """ processes image for further evalution """
+
+    # remove fisheye distortion
+    frame = remove_fisheye(img)
+
+    # apply perspective warping
+    dst = cv2.warpPerspective(frame, transformation, tuple(OUTPUT_SIZE))
+
+    # get region of interest
+    cropped = dst[1050:-950, 3500:6200]
+    dst = cropped.copy()
+
+    # find largest contour
+    if largest_contour is None:
+        hsv = cv2.cvtColor(dst, cv2.COLOR_BGR2HSV)
+        lower_range = np.array([0, 0, 0], dtype=np.uint8)
+        upper_range = np.array([255, 255, 70], dtype=np.uint8)
+        mask = cv2.inRange(hsv, lower_range, upper_range)
+
+        # close blobs
+        kernel = np.ones((40, 40), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
+        _, contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        largest_contour = max(contours, key=cv2.contourArea)
+
+    mask = np.zeros(dst.shape, np.uint8)
+    cv2.drawContours(mask, [largest_contour], 0, 255, -1)
+    mask = mask[:, :, 0]
+
+    res = cv2.bitwise_and(dst, dst, mask=mask)
+
+    return res, cropped, largest_contour
+
+
+def detect_car(fgbg, frame):
+    # substract background
+    fgmask = fgbg.apply(frame)
+
+    # close masks
+    kernel = np.ones((15, 15), np.uint8)
+    fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)
+    kernel = np.ones((50, 50), np.uint8)
+    fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_DILATE, kernel)
+
+    # find largest contour and compute centroid
+    cx, cy = (0, 0)
+    _, contours, _ = cv2.findContours(fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if contours:
+        largest_contour = max(contours, key=cv2.contourArea)
+
+        # compute centroid of contour
+        moment = cv2.moments(largest_contour)
+        cx = int(moment['m10'] / moment['m00'])
+        cy = int(moment['m01'] / moment['m00'])
+
+    return (cx, cy), fgmask
+
+
+def detect_center_coords(img):
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower_range = np.array([0, 0, 200], dtype=np.uint8)
+    upper_range = np.array([255, 255, 255], dtype=np.uint8)
+    mask = cv2.inRange(hsv, lower_range, upper_range)
+
+    _, contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cx, cy = (0, 0)
+    if contours:
+        largest_contour = max(contours, key=cv2.contourArea)
+
+        # compute centroid of contour
+        moment = cv2.moments(largest_contour)
+        cx = int(moment['m10'] / moment['m00'])
+        cy = int(moment['m01'] / moment['m00'])
+
+    return (cx, cy), mask
 
 
 # noinspection PyArgumentList
@@ -104,26 +185,49 @@ def convert_video(video_file, debug=False):
 
     # output definition
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(join('output', 'result.avi'), fourcc, 5.0, (6000, 7000))
+    out = cv2.VideoWriter(join('output', 'result.avi'), fourcc, 1.0, (700, 1000))
 
-    cap = cv2.VideoCapture(1)
+    fgbg = cv2.createBackgroundSubtractorMOG2()
 
-    frame_count = 0
+    cap = cv2.VideoCapture(video_file)
+    largest_contour = None
+    center_coords = None
+    frame_counter = 0
     while cap.isOpened():
         ret, frame = cap.read()
         if ret:
 
-            # remove fisheye distortion
-            frame = remove_fisheye(frame)
-            dst = cv2.warpPerspective(frame, transformation, (6000, 7000))
+            # perform pre-processing
+            pre_processed_image, cropped_image, largest_contour = pre_process_image(frame,
+                                                                                    transformation,
+                                                                                    largest_contour)
 
-            plt.imshow(cv2.cvtColor(dst, cv2.COLOR_BGR2RGB))
-            plt.show()
-            # out.write(dst)
+            # detect car
+            car_coords, car_mask = detect_car(fgbg, pre_processed_image)
 
-            print('writing frame ', frame_count)
-            frame_count += 1
-        else:
+            # detect coords of center
+            if center_coords is None:
+                center_coords, center_mask = detect_center_coords(pre_processed_image)
+
+            # show results when ready
+            if frame_counter > 3:
+                cv2.line(cropped_image, center_coords, car_coords, (255, 0, 0), 10)
+                cv2.circle(cropped_image, car_coords, 30, (0, 0, 255), -1)
+                cv2.circle(cropped_image, center_coords, 30, (0, 255, 255), -1)
+
+            to_show = np.concatenate((cropped_image,
+                                      pre_processed_image,
+                                      cv2.bitwise_and(pre_processed_image, pre_processed_image, mask=center_mask),
+                                      cv2.bitwise_and(pre_processed_image, pre_processed_image, mask=car_mask)),
+                                     axis=1)
+            cv2.imshow('converted video', cv2.resize(to_show, (0, 0), fx=0.15, fy=0.15))
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+            frame_counter += 1
+            out.write(cv2.resize(to_show, (0, 0), fx=0.1, fy=0.1))
+        else:gits
+        
             break
 
     # Release everything if job is finished
@@ -133,4 +237,4 @@ def convert_video(video_file, debug=False):
 
 
 if __name__ == '__main__':
-    convert_video(video_file='output_2.m4v', debug=True)
+    convert_video(video_file='input.m4v', debug=True)
