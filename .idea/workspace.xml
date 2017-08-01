@@ -2,73 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d1ab0136-fdf0-4dc3-96de-198644446c34" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/README" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ESP_Code/ConnectToMosquit/ConnectToMosquit.ino" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/Figure_1.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/README.md" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/Hardware/Sensors/esp_design.fzz" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/Hardware/Sensors/esp_mpu_circuit.fzz" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/Hardware/Sensors/mpu6050.fzz" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/Makefile" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/doctrees/code.doctree" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/doctrees/environment.pickle" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/doctrees/index.doctree" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/.buildinfo" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/.nojekyll" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_modules/AI_Base.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_modules/esp_connection.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_modules/index.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_modules/slotcar_control.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_sources/code.rst.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_sources/index.rst.txt" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/ajax-loader.gif" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/alabaster.css" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/basic.css" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/comment-bright.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/comment-close.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/comment.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/custom.css" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/doctools.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/down-pressed.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/down.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/file.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/jquery-3.1.0.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/jquery.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/minus.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/plus.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/pygments.css" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/searchtools.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/underscore-1.3.1.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/underscore.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/up-pressed.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/up.png" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/websupport.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/code.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/genindex.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/index.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/objects.inv" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/py-modindex.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/search.html" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/searchindex.js" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/code.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/conf.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/index.rst" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/.idea/misc.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/.idea/modules.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/.idea/src.iml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/.idea/workspace.xml" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/AI_Base.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/Data_Manipulation.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/data_5_laps" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/esp_connection.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/not_used/analyzing_acceleration.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/not_used/data_playground.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/simple_ai_algorithm.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/slotcar_control.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/store_data.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/video_manipulation.py" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/video_saving.py" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/self-driving-slotcar.iml" afterPath="$PROJECT_DIR$/.idea/self-driving-slotcar.iml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sensor_project/README.md" afterPath="$PROJECT_DIR$/sensor_project/README.md" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -90,7 +26,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="README" pinned="false" current-in-tab="true">
+      <file leaf-file-name="README" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/README">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="315">
@@ -100,11 +36,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="README.md" pinned="false" current-in-tab="false">
+      <file leaf-file-name="README.md" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/sensor_project/README.md">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="750">
-              <caret line="126" column="51" lean-forward="false" selection-start-line="126" selection-start-column="51" selection-end-line="126" selection-end-column="51" />
+            <state relative-caret-position="480">
+              <caret line="32" column="41" lean-forward="false" selection-start-line="32" selection-start-column="41" selection-end-line="32" selection-end-column="41" />
               <folding />
             </state>
           </provider>
@@ -137,9 +73,11 @@
       <file leaf-file-name="esp_connection.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/sensor_project/esp_connection.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="45">
-              <caret line="3" column="0" lean-forward="false" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="0" />
-              <folding />
+            <state relative-caret-position="105">
+              <caret line="7" column="0" lean-forward="false" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
+              <folding>
+                <element signature="e#0#31#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -157,9 +95,11 @@
       <file leaf-file-name="AI_Base.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/sensor_project/AI_Base.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="30">
-              <caret line="2" column="22" lean-forward="false" selection-start-line="2" selection-start-column="7" selection-end-line="2" selection-end-column="22" />
-              <folding />
+            <state relative-caret-position="390">
+              <caret line="26" column="35" lean-forward="true" selection-start-line="26" selection-start-column="35" selection-end-line="26" selection-end-column="35" />
+              <folding>
+                <element signature="e#0#29#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -233,10 +173,6 @@
               <option name="myItemId" value="External Libraries" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode" />
             </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="&lt; Python 3.4.3 (/Library/Frameworks/Python.framework/Versions/3.4/bin/python3.4) &gt;" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode" />
-            </PATH_ELEMENT>
           </PATH>
           <PATH>
             <PATH_ELEMENT>
@@ -259,28 +195,6 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="sensor_project" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="self-driving-slotcar" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="self-driving-slotcar" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="sensor_project" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ESP_Code" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="ConnectToMosquit" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -306,7 +220,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyIntegratedToolsModulesConfigurable" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="FullScreen" value="true" />
   </component>
   <component name="RunDashboard">
@@ -328,7 +242,7 @@
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="" />
+      <option name="SDK_HOME" value="/Library/Frameworks/Python.framework/Versions/3.4/bin/python3.4" />
       <option name="WORKING_DIRECTORY" value="" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
@@ -393,12 +307,12 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/sensor_project" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="self-driving-slotcar" />
-      <option name="SCRIPT_NAME" value="simple_ai_algorithm" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/sensor_project/AI_Base.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="true" />
@@ -550,16 +464,6 @@
     <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py" />
     <entry file="file://$PROJECT_DIR$/src/AI_Base.py" />
     <entry file="file://$PROJECT_DIR$/src/store_data.py" />
-    <entry file="file://$PROJECT_DIR$/sensor_project/simple_ai_algorithm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/sensor_project/slotcar_control.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -570,34 +474,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/sensor_project/esp_connection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="45">
-          <caret line="3" column="0" lean-forward="false" selection-start-line="3" selection-start-column="0" selection-end-line="3" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sensor_project/AI_Base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="22" lean-forward="false" selection-start-line="2" selection-start-column="7" selection-end-line="2" selection-end-column="22" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/LICENSE">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sensor_project/README.md">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="750">
-          <caret line="126" column="51" lean-forward="false" selection-start-line="126" selection-start-column="51" selection-end-line="126" selection-end-column="51" />
           <folding />
         </state>
       </provider>
@@ -610,10 +490,48 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/sensor_project/simple_ai_algorithm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#18#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sensor_project/esp_connection.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="7" column="0" lean-forward="false" selection-start-line="7" selection-start-column="0" selection-end-line="7" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#31#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sensor_project/AI_Base.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="390">
+          <caret line="26" column="35" lean-forward="true" selection-start-line="26" selection-start-column="35" selection-end-line="26" selection-end-column="35" />
+          <folding>
+            <element signature="e#0#29#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/README">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="315">
           <caret line="21" column="0" lean-forward="false" selection-start-line="21" selection-start-column="0" selection-end-line="21" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/sensor_project/README.md">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="480">
+          <caret line="32" column="41" lean-forward="false" selection-start-line="32" selection-start-column="41" selection-end-line="32" selection-end-column="41" />
           <folding />
         </state>
       </provider>

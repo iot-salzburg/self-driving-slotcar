@@ -1,4 +1,3 @@
-# self-driving-slotcar
 Code base for the sensors and the corresponding algorithms.
 
 Introduction:
@@ -31,7 +30,7 @@ given in the simple_ai_algorithm.py script.
 
 
 Tips and Common bugs for running scripts:
-==============================================
+=========================================
 The bugs which are well known are hardware specific (could possibly be prevented by having better software; just don't
 know how).
 • The most common bug is with the 6CPB. To have everything run smoothly, power off the 6CPB and unplug all other
@@ -42,11 +41,12 @@ cables besides the modem cable. Then turn it back on and proceed with the algori
 
 • When communication doesn't seem to work with the ESP, check if you are connected to sensornet.
 
+Directory Structure:
+====================
 
-Notes:
-======
-• We are using two cores for this implementation. One is used to receive the data from the ESP through mqtt while
-the other core handles the algorithm.
+• The doc folder should have any additional documentation besides this one.
+
+• The scripts in the current directory are the ones used to handle the running of the algorithms.
 
 • In the not_used directory you can find script which partially implement some functionalities but were not used in the
 final implementation.
@@ -56,6 +56,14 @@ final implementation.
     functions can be written. Could be extended in the future.
     -store_data can be used to store some laps worth of data and then retrieve that data at a later time.
     Useful to work with data offline.
+
+• The ESP_Code directory has the code from the esp.
+
+
+Notes:
+======
+• We are using two cores for this implementation. One is used to receive the data from the ESP through mqtt while
+the other core handles the algorithm.
 
 • You can change the MPU settings, i.e. you can change up to how high/low you want to measure your g values for
 acceleration or the scale of the gyroscope measurements. Check
@@ -73,7 +81,7 @@ The reason the slotcar data is so noise is because the car itself shakes lightly
 frequency noise which can and has lead to unwanted inaccuracies.
 
 Potential Solution
---------
+------------------
 • A solution is to use a camera setup which will detect the car and see where it is located. Johannes and I have started
 to work on this project and the progress can be found in gym-slotcar and computer_vision.
 • Another solution would be to have a mechanical filter which would cancel out the high frequency noise.
