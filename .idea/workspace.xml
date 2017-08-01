@@ -2,7 +2,84 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="d1ab0136-fdf0-4dc3-96de-198644446c34" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/sensor_project/doc/Hardware/CarCover.stl" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/README" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/computer_vision/video_manipulation.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/computer_vision/video_saving.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gym-slotcar/.idea/gym-slotcar.iml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gym-slotcar/.idea/misc.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gym-slotcar/.idea/modules.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gym-slotcar/gym_slotcar/__init__.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gym-slotcar/gym_slotcar/envs/__init__.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gym-slotcar/gym_slotcar/envs/slotcar.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/gym-slotcar/setup.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/sensor_project/.idea/misc.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/sensor_project/.idea/workspace.xml" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/sensor_project/ESP_Code/ConnectToMosquit/ConnectToMosquit.ino" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/sensor_project/README.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/index.html" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/Figure_1.png" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/README.md" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/src/.idea/misc.xml" afterPath="" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/Hardware/Sensors/ESP8266 WiFi Module.fzpz" afterPath="$PROJECT_DIR$/sensor_project/doc/Hardware/Sensors/esp_design.fzz" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/Hardware/Sensors/MPU-6050 Board GY-521.fzpz" afterPath="$PROJECT_DIR$/sensor_project/doc/Hardware/Sensors/mpu6050.fzz" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/Hardware/Sensors/esp_mpu_circuit.fzz" afterPath="$PROJECT_DIR$/sensor_project/doc/Hardware/Sensors/esp_mpu_circuit.fzz" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/Makefile" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/Makefile" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/doctrees/code.doctree" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/doctrees/code.doctree" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/doctrees/environment.pickle" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/doctrees/environment.pickle" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/doctrees/index.doctree" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/doctrees/index.doctree" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/.buildinfo" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/.buildinfo" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/.nojekyll" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/.nojekyll" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_modules/AI_Base.html" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_modules/AI_Base.html" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_modules/esp_connection.html" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_modules/esp_connection.html" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_modules/index.html" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_modules/index.html" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_modules/slotcar_control.html" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_modules/slotcar_control.html" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_sources/code.rst.txt" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_sources/code.rst.txt" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_sources/index.rst.txt" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_sources/index.rst.txt" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/ajax-loader.gif" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/ajax-loader.gif" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/alabaster.css" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/alabaster.css" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/basic.css" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/basic.css" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/comment-bright.png" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/comment-bright.png" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/comment-close.png" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/comment-close.png" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/comment.png" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/comment.png" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/custom.css" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/custom.css" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/doctools.js" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/doctools.js" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/down-pressed.png" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/down-pressed.png" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/down.png" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/down.png" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/file.png" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/file.png" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/jquery-3.1.0.js" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/jquery-3.1.0.js" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/jquery.js" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/jquery.js" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/minus.png" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/minus.png" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/plus.png" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/plus.png" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/pygments.css" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/pygments.css" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/searchtools.js" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/searchtools.js" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/underscore-1.3.1.js" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/underscore-1.3.1.js" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/underscore.js" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/underscore.js" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/up-pressed.png" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/up-pressed.png" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/up.png" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/up.png" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/_static/websupport.js" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/_static/websupport.js" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/code.html" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/code.html" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/genindex.html" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/genindex.html" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/index.html" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Code_Docu.html" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/objects.inv" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/objects.inv" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/py-modindex.html" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/py-modindex.html" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/search.html" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/search.html" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/_build/html/searchindex.js" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/_build/html/searchindex.js" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/code.rst" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/code.rst" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/conf.py" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/conf.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/doc/PythonDocumentation/index.rst" afterPath="$PROJECT_DIR$/sensor_project/doc/PythonDocumentation/Sphinx/index.rst" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/.idea/modules.xml" afterPath="$PROJECT_DIR$/sensor_project/.idea/modules.xml" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/.idea/src.iml" afterPath="$PROJECT_DIR$/sensor_project/.idea/src.iml" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/.idea/workspace.xml" afterPath="$PROJECT_DIR$/gym-slotcar/.idea/workspace.xml" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/AI_Base.py" afterPath="$PROJECT_DIR$/sensor_project/AI_Base.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/Data_Manipulation.py" afterPath="$PROJECT_DIR$/sensor_project/not_used/Data_Manipulation.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/data_5_laps" afterPath="$PROJECT_DIR$/sensor_project/not_used/data_5_laps" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/esp_connection.py" afterPath="$PROJECT_DIR$/sensor_project/esp_connection.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/not_used/analyzing_acceleration.py" afterPath="$PROJECT_DIR$/sensor_project/not_used/analyzing_acceleration.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/not_used/data_playground.py" afterPath="$PROJECT_DIR$/sensor_project/not_used/data_playground.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/simple_ai_algorithm.py" afterPath="$PROJECT_DIR$/sensor_project/simple_ai_algorithm.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/slotcar_control.py" afterPath="$PROJECT_DIR$/sensor_project/slotcar_control.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/src/store_data.py" afterPath="$PROJECT_DIR$/sensor_project/not_used/store_data.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/self-driving-slotcar.iml" afterPath="$PROJECT_DIR$/.idea/self-driving-slotcar.iml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/computer_vision/main.py" afterPath="$PROJECT_DIR$/computer_vision/main.py" />
@@ -21,35 +98,11 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="slotcar_control.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/slotcar_control.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="735">
-              <caret line="51" column="0" lean-forward="false" selection-start-line="51" selection-start-column="0" selection-end-line="51" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#13#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="simple_ai_algorithm.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="187">
-              <caret line="36" column="17" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="70" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#11#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/computer_vision/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="498">
-              <caret line="229" column="8" lean-forward="false" selection-start-line="229" selection-start-column="8" selection-end-line="229" selection-end-column="8" />
+            <state relative-caret-position="340">
+              <caret line="228" column="13" lean-forward="false" selection-start-line="228" selection-start-column="13" selection-end-line="228" selection-end-column="13" />
               <folding>
                 <element signature="e#0#10#0" expanded="true" />
               </folding>
@@ -60,42 +113,8 @@
       <file leaf-file-name="tokenize.py" pinned="false" current-in-tab="false">
         <entry file="file://$USER_HOME$/.pyenv/versions/3.5.2/lib/python3.5/tokenize.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="184">
+            <state relative-caret-position="6690">
               <caret line="453" column="0" lean-forward="false" selection-start-line="453" selection-start-column="0" selection-end-line="453" selection-end-column="0" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="AI_Base.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/AI_Base.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1065">
-              <caret line="75" column="13" lean-forward="false" selection-start-line="75" selection-start-column="13" selection-end-line="75" selection-end-column="13" />
-              <folding>
-                <element signature="e#0#29#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="esp_connection.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/esp_connection.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="615">
-              <caret line="48" column="0" lean-forward="false" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
-              <folding>
-                <element signature="e#0#31#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="README.md" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/README.md">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="30">
-              <caret line="2" column="0" lean-forward="false" selection-start-line="2" selection-start-column="0" selection-end-line="2" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -113,39 +132,12 @@
       </file>
     </leaf>
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Python Script" />
-      </list>
-    </option>
-  </component>
-  <component name="FindInProjectRecents">
-    <findStrings>
-      <find>game_started</find>
-      <find>received_time</find>
-      <find>disconnect</find>
-      <find>packets_read</find>
-      <find>contour</find>
-    </findStrings>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/not_used/simple_ai_algorithm.py" />
-        <option value="$PROJECT_DIR$/src/data_playground.py" />
-        <option value="$PROJECT_DIR$/src/Data_Manipulation.py" />
-        <option value="$PROJECT_DIR$/AI_Base.py" />
-        <option value="$PROJECT_DIR$/src/simple_ai_algorithm.py" />
-        <option value="$PROJECT_DIR$/src/slotcar_control.py" />
-        <option value="$PROJECT_DIR$/src/esp_connection.py" />
-        <option value="$PROJECT_DIR$/README.md" />
-        <option value="$PROJECT_DIR$/src/AI_Base.py" />
-        <option value="$PROJECT_DIR$/src/store_data.py" />
-        <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/computer_vision/main.py" />
       </list>
     </option>
@@ -177,6 +169,7 @@
     </navigator>
     <panes>
       <pane id="Scope" />
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -199,34 +192,16 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
             <PATH_ELEMENT>
-              <option name="myItemId" value="src" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="self-driving-slotcar" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="self-driving-slotcar" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
               <option name="myItemId" value="computer_vision" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="add_unversioned_files" value="$PROJECT_DIR$/.gitignore" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -368,6 +343,12 @@
       <method />
     </configuration>
     <configuration default="true" type="js.build_tools.gulp" factoryName="Gulp.js">
+      <node-interpreter>project</node-interpreter>
+      <node-options />
+      <gulpfile />
+      <tasks />
+      <arguments />
+      <envs />
       <method />
     </configuration>
     <configuration default="true" type="js.build_tools.npm" factoryName="npm">
@@ -445,6 +426,9 @@
   <component name="ShelveChangesManager" show_recycled="false">
     <option name="remove_strategy" value="false" />
   </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="d1ab0136-fdf0-4dc3-96de-198644446c34" name="Default" comment="" />
@@ -457,19 +441,17 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1920" height="1053" extended-state="6" />
-    <editor active="true" />
     <layout>
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2550586" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3298647" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25239617" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3298647" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.39958376" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3298647" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39958376" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -477,6 +459,7 @@
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3298647" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
@@ -510,44 +493,10 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="495">
-          <caret line="36" column="17" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="70" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/AI_Base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1065">
-          <caret line="75" column="13" lean-forward="true" selection-start-line="75" selection-start-column="13" selection-end-line="75" selection-end-column="13" />
-          <folding>
-            <element signature="e#0#29#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/esp_connection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="615">
-          <caret line="48" column="0" lean-forward="false" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="0" lean-forward="false" selection-start-line="2" selection-start-column="0" selection-end-line="2" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py" />
+    <entry file="file://$PROJECT_DIR$/src/AI_Base.py" />
+    <entry file="file://$PROJECT_DIR$/src/esp_connection.py" />
+    <entry file="file://$PROJECT_DIR$/README.md" />
     <entry file="file://$PROJECT_DIR$/LICENSE">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -556,85 +505,15 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/store_data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="495">
-          <caret line="37" column="59" lean-forward="true" selection-start-line="37" selection-start-column="59" selection-end-line="37" selection-end-column="59" />
-          <folding>
-            <element signature="e#0#11#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/esp_connection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1950">
-          <caret line="137" column="37" lean-forward="true" selection-start-line="137" selection-start-column="37" selection-end-line="137" selection-end-column="37" />
-          <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="20" column="21" lean-forward="true" selection-start-line="20" selection-start-column="21" selection-end-line="20" selection-end-column="21" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/src/store_data.py" />
+    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py" />
+    <entry file="file://$PROJECT_DIR$/src/esp_connection.py" />
+    <entry file="file://$PROJECT_DIR$/README.md" />
     <entry file="file://$PROJECT_DIR$/src/data_playground.py" />
-    <entry file="file://$PROJECT_DIR$/src/Data_Manipulation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="23" column="69" lean-forward="false" selection-start-line="23" selection-start-column="69" selection-end-line="23" selection-end-column="69" />
-          <folding>
-            <element signature="e#0#19#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1200">
-          <caret line="85" column="0" lean-forward="true" selection-start-line="85" selection-start-column="0" selection-end-line="85" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2745">
-          <caret line="185" column="35" lean-forward="false" selection-start-line="185" selection-start-column="35" selection-end-line="185" selection-end-column="35" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/esp_connection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2010">
-          <caret line="143" column="16" lean-forward="false" selection-start-line="143" selection-start-column="16" selection-end-line="143" selection-end-column="16" />
-          <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/src/Data_Manipulation.py" />
+    <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py" />
+    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py" />
+    <entry file="file://$PROJECT_DIR$/src/esp_connection.py" />
     <entry file="file://$PROJECT_DIR$/src/analyzing_acceleration.py" />
     <entry file="file://$PROJECT_DIR$/src/not_used/simple_ai_algorithm.py" />
     <entry file="file://$PROJECT_DIR$/AI_Base.py" />
@@ -647,174 +526,28 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="0" lean-forward="false" selection-start-line="2" selection-start-column="0" selection-end-line="2" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/AI_Base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-183">
-          <caret line="34" column="30" lean-forward="false" selection-start-line="34" selection-start-column="30" selection-end-line="34" selection-end-column="30" />
-          <folding>
-            <element signature="e#0#29#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-188">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/Data_Manipulation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="23" column="69" lean-forward="false" selection-start-line="23" selection-start-column="69" selection-end-line="23" selection-end-column="69" />
-          <folding>
-            <element signature="e#0#19#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/not_used/analyzing_acceleration.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/esp_connection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1341">
-          <caret line="23" column="0" lean-forward="false" selection-start-line="23" selection-start-column="0" selection-end-line="23" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1549">
-          <caret line="36" column="0" lean-forward="false" selection-start-line="36" selection-start-column="0" selection-end-line="36" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/esp_connection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1950">
-          <caret line="137" column="37" lean-forward="true" selection-start-line="137" selection-start-column="37" selection-end-line="137" selection-end-column="37" />
-          <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="20" column="21" lean-forward="true" selection-start-line="20" selection-start-column="21" selection-end-line="20" selection-end-column="21" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md" />
+    <entry file="file://$PROJECT_DIR$/src/AI_Base.py" />
+    <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py" />
+    <entry file="file://$PROJECT_DIR$/src/Data_Manipulation.py" />
+    <entry file="file://$PROJECT_DIR$/src/not_used/analyzing_acceleration.py" />
+    <entry file="file://$PROJECT_DIR$/src/esp_connection.py" />
+    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py" />
+    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py" />
+    <entry file="file://$PROJECT_DIR$/src/esp_connection.py" />
+    <entry file="file://$PROJECT_DIR$/README.md" />
     <entry file="file://$PROJECT_DIR$/src/data_playground.py" />
-    <entry file="file://$PROJECT_DIR$/src/Data_Manipulation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="300">
-          <caret line="23" column="69" lean-forward="false" selection-start-line="23" selection-start-column="69" selection-end-line="23" selection-end-column="69" />
-          <folding>
-            <element signature="e#0#19#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1200">
-          <caret line="85" column="0" lean-forward="true" selection-start-line="85" selection-start-column="0" selection-end-line="85" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2745">
-          <caret line="185" column="35" lean-forward="false" selection-start-line="185" selection-start-column="35" selection-end-line="185" selection-end-column="35" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/esp_connection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2010">
-          <caret line="143" column="16" lean-forward="false" selection-start-line="143" selection-start-column="16" selection-end-line="143" selection-end-column="16" />
-          <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/src/Data_Manipulation.py" />
+    <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py" />
+    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py" />
+    <entry file="file://$PROJECT_DIR$/src/esp_connection.py" />
     <entry file="file://$PROJECT_DIR$/src/analyzing_acceleration.py" />
     <entry file="file://$PROJECT_DIR$/src/not_used/simple_ai_algorithm.py" />
     <entry file="file://$PROJECT_DIR$/AI_Base.py" />
     <entry file="file://$PROJECT_DIR$/src/data_playground.py" />
-    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="735">
-          <caret line="51" column="0" lean-forward="false" selection-start-line="51" selection-start-column="0" selection-end-line="51" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/esp_connection.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="615">
-          <caret line="48" column="0" lean-forward="false" selection-start-line="48" selection-start-column="0" selection-end-line="48" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#31#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/Data_Manipulation.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="23" column="69" lean-forward="false" selection-start-line="23" selection-start-column="69" selection-end-line="23" selection-end-column="69" />
-          <folding>
-            <element signature="e#0#19#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/src/slotcar_control.py" />
+    <entry file="file://$PROJECT_DIR$/src/esp_connection.py" />
+    <entry file="file://$PROJECT_DIR$/src/Data_Manipulation.py" />
     <entry file="file://$PROJECT_DIR$/LICENSE">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -823,24 +556,8 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="2" column="0" lean-forward="false" selection-start-line="2" selection-start-column="0" selection-end-line="2" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/AI_Base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1065">
-          <caret line="75" column="13" lean-forward="false" selection-start-line="75" selection-start-column="13" selection-end-line="75" selection-end-column="13" />
-          <folding>
-            <element signature="e#0#29#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md" />
+    <entry file="file://$PROJECT_DIR$/src/AI_Base.py" />
     <entry file="file://$PROJECT_DIR$/.gitignore">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="45">
@@ -851,7 +568,7 @@
     </entry>
     <entry file="file://$USER_HOME$/.pyenv/versions/3.5.2/lib/python3.5/tokenize.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="184">
+        <state relative-caret-position="6690">
           <caret line="453" column="0" lean-forward="false" selection-start-line="453" selection-start-column="0" selection-end-line="453" selection-end-column="0" />
           <folding />
         </state>
@@ -865,38 +582,19 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/store_data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="555">
-          <caret line="37" column="59" lean-forward="false" selection-start-line="37" selection-start-column="59" selection-end-line="37" selection-end-column="59" />
-          <folding>
-            <element signature="e#0#11#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="187">
-          <caret line="36" column="17" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="70" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#11#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/src/store_data.py" />
+    <entry file="file://$PROJECT_DIR$/src/simple_ai_algorithm.py" />
     <entry file="file://$USER_HOME$/Library/Caches/PyCharm2017.1/python_stubs/-916987915/cv2/fisheye.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="347">
           <caret line="216" column="30" lean-forward="true" selection-start-line="216" selection-start-column="30" selection-end-line="216" selection-end-column="30" />
-          <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/computer_vision/main.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="498">
-          <caret line="229" column="8" lean-forward="false" selection-start-line="229" selection-start-column="8" selection-end-line="229" selection-end-column="8" />
+        <state relative-caret-position="340">
+          <caret line="228" column="13" lean-forward="false" selection-start-line="228" selection-start-column="13" selection-end-line="228" selection-end-column="13" />
           <folding>
             <element signature="e#0#10#0" expanded="true" />
           </folding>

@@ -1,7 +1,6 @@
 import paho.mqtt.client as paho
 import sys as sys
 import time
-import pandas as pd
 import multiprocessing as mp
 
 import numpy as np

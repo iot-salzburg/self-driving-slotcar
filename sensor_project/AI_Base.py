@@ -42,8 +42,8 @@ class BaseAI:
                            data from here. Again, work with self.index_data to know which index to use.
             
     """
-    def __init__(self, carID=2, raw_data=False):
-        self.slotcar_client = scc.SlotcarClient()
+    def __init__(self, carID=2, raw_data=False, port="/dev/tty.usbserial-AI05FT0P"):
+        self.slotcar_client = scc.SlotcarClient(port = port)
         self.carID = carID
 
         # set in init_from_queue

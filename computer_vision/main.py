@@ -226,8 +226,7 @@ def convert_video(video_file, debug=False):
 
             frame_counter += 1
             out.write(cv2.resize(to_show, (0, 0), fx=0.1, fy=0.1))
-        else:gits
-        
+        else:
             break
 
     # Release everything if job is finished
