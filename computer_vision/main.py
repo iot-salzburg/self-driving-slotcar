@@ -14,7 +14,7 @@ def remove_fisheye(img):
                   [0., 0., 1.]])
 
     # zero distortion coefficients work well for this image
-    D = np.array([-0.31331 * 0.5, 0.12965, 0.00073, -0.00022])
+    D = np.array([-0.31331, 0.12965, 0.00073, -0.00022])
 
     # use Knew to scale the output
     Knew = K.copy()
