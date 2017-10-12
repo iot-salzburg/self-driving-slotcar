@@ -1,13 +1,17 @@
 The Repository for the slotcar project.
 =======================================
 
-• Check out sensor_project for the work done on the movement sensors of the slotcar. Most useful script for future
+Video:
+======
+• Video for demonstration of the AI: https://youtu.be/409T4ltwYKQ
+
+• Look at "sensor_project" for the work done on the movement sensors of the slotcar. Most useful script for future
 maybe the slotcar_control.py script with which one can interact with the 6 Car Power Base to control the slotcar.
 
-• Check out gym-slotcar for a slotcar client for a RL algorithm which is provided by OpenAI. Depends also on computer_
+• Check "gym-slotcar" for a slotcar client for a RL algorithm which is provided by OpenAI. Depends also on computer_
 vision dir.
 
-• Check computer_vision for everything related to analyzing where the car is on the track and following it through
+• Check "computer_vision" for everything related to analyzing where the car is on the track and following it through
 computer vision.
 
 Dependencies:
