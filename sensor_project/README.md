@@ -44,7 +44,7 @@ cables besides the modem cable. Then turn it back on and proceed with the algori
 Directory Structure:
 ====================
 
-• The doc folder should have any additional documentation besides this one.
+• The doc folder should have any additional documentation besides this one. To reach the code documenation go to /doc/PythonDocumentation/Sphinx/_build/html/code.html
 
 • The scripts in the current directory are the ones used to handle the running of the algorithms.
 
